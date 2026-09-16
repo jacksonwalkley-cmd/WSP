@@ -1,0 +1,321 @@
+<script>
+const defaultState = {
+  profile: { name: "Jake Williams", height: "6'2", weight: "215 lbs", photo: null, strengths: ["Ball Speed","Consistency"], flaws: ["Spiral Wobble","Short Follow-Through"], created: false },
+  theme: "#B8AFA0",
+  streak: 12, currentBlock: 2, currentWeek: 3, snapDayCount: 2,
+  logs: [], liftLogs: {},
+  recovery: { sleep: 5, soreness: 5, energy: 5, mood: 5, notes: "", date: null },
+  chat: [
+    {sender:"ai", text:"Hey Jake. I see you listed Short Follow-Through as a flaw and your 12 YD reps today were both Tight. Before we move to 14-15 YD, want to work on that extension drill?"},
+    {sender:"user", text:"Yeah, I feel like I am cutting off my finish at game distance."},
+    {sender:"ai", text:"Your video from last Friday's 14-15 YD session shows exactly that — hips stop rotating at 80%. Try the Hip Rotation Drill in your Snap Drills section before your next session. Two reps, slow motion, full extension."}
+  ],
+  warmupDone: [false,false,false,false,false], currentStage: 2, stageReps: {0:[], 1:[], 2:[]}
+};
+
+let state = JSON.parse(JSON.stringify(defaultState));
+
+function loadState() {
+  const saved = localStorage.getItem("wsp_state");
+  if (saved) { try { state = JSON.parse(saved); } catch(e) {} }
+  if (state.theme) applyTheme(state.theme);
+}
+function saveState() { localStorage.setItem("wsp_state", JSON.stringify(state)); }
+loadState();
+
+function applyTheme(color) {
+  document.documentElement.style.setProperty('--accent', color);
+  state.theme = color;
+  saveState();
+}
+function setTheme(color, el) {
+  applyTheme(color);
+  document.querySelectorAll('.color-option').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function goTo(screen) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-" + screen).classList.add("active");
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  const tab = document.querySelector('.tab[data-tab="' + screen + '"]');
+  if (tab) tab.classList.add("active");
+  if (screen === "progress") renderProgress();
+  if (screen === "program") renderProgram();
+  if (screen === "chat") renderChat();
+  if (screen === "log") renderLog();
+  if (screen === "home") renderHome();
+  if (screen === "profile") renderProfile();
+  window.scrollTo(0,0);
+}
+
+setTimeout(() => { document.getElementById("splashFill").style.width = "100%"; }, 100);
+setTimeout(() => { if (!state.profile.created) goTo("onboard"); else goTo("home"); }, 1600);
+
+function handleOnboardPhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    state.profile.photo = ev.target.result;
+    document.getElementById("onboardAvatarImg").src = ev.target.result;
+    document.getElementById("onboardAvatarImg").style.display = "block";
+    document.getElementById("onboardAvatarText").style.display = "none";
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleOnboardTagKey(e, type) {
+  if (e.key === "Enter" && e.target.value.trim()) {
+    const container = type === "strengths" ? document.getElementById("onboardStrengths") : document.getElementById("onboardFlaws");
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.innerHTML = e.target.value.trim() + ' <span class="remove" onclick="removeOnboardTag(this,\'' + type + '\')">×</span>';
+    container.insertBefore(tag, e.target);
+    state.profile[type].push(e.target.value.trim());
+    e.target.value = "";
+  }
+}
+
+function removeOnboardTag(el, type) {
+  const text = el.parentNode.textContent.replace("×","").trim();
+  state.profile[type] = state.profile[type].filter(t => t !== text);
+  el.parentNode.remove();
+}
+
+function saveOnboardProfile() {
+  state.profile.name = document.getElementById("onboardName").value || "Jake";
+  state.profile.height = document.getElementById("onboardHeight").value;
+  state.profile.weight = document.getElementById("onboardWeight").value;
+  state.profile.created = true;
+  saveState();
+  goTo("home");
+}
+
+function renderProfile() {
+  document.getElementById("profileName").value = state.profile.name;
+  document.getElementById("profileHeight").value = state.profile.height;
+  document.getElementById("profileWeight").value = state.profile.weight;
+  const av = document.getElementById("profileAvatar");
+  if (state.profile.photo) {
+    document.getElementById("profileAvatarImg").src = state.profile.photo;
+    document.getElementById("profileAvatarImg").style.display = "block";
+    document.getElementById("profileAvatarText").style.display = "none";
+  } else {
+    document.getElementById("profileAvatarImg").style.display = "none";
+    document.getElementById("profileAvatarText").style.display = "block";
+    document.getElementById("profileAvatarText").textContent = state.profile.name.split(" ").map(n=>n[0]).join("").substring(0,2).toUpperCase();
+  }
+  const stContainer = document.getElementById("profileStrengths");
+  stContainer.innerHTML = state.profile.strengths.map(s => '<span class="tag">' + s + ' <span class="remove" onclick="removeProfileTag(this,\'strengths\')">×</span></span>').join("") + '<input type="text" class="tag-input" placeholder="+ Add tag" onkeypress="handleProfileTagKey(event,\'strengths\')">';
+  const flContainer = document.getElementById("profileFlaws");
+  flContainer.innerHTML = state.profile.flaws.map(f => '<span class="tag">' + f + ' <span class="remove" onclick="removeProfileTag(this,\'flaws\')">×</span></span>').join("") + '<input type="text" class="tag-input" placeholder="+ Add tag" onkeypress="handleProfileTagKey(event,\'flaws\')">';
+  document.querySelectorAll('.color-option').forEach(c => {
+    c.classList.remove('active');
+    if (c.style.background === state.theme || c.getAttribute('onclick').includes(state.theme)) c.classList.add('active');
+  });
+}
+
+function handleProfilePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    state.profile.photo = ev.target.result;
+    document.getElementById("profileAvatarImg").src = ev.target.result;
+    document.getElementById("profileAvatarImg").style.display = "block";
+    document.getElementById("profileAvatarText").style.display = "none";
+    saveState();
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleProfileTagKey(e, type) {
+  if (e.key === "Enter" && e.target.value.trim()) {
+    state.profile[type].push(e.target.value.trim());
+    e.target.value = "";
+    saveState();
+    renderProfile();
+  }
+}
+
+function removeProfileTag(el, type) {
+  const text = el.parentNode.textContent.replace("×","").trim();
+  state.profile[type] = state.profile[type].filter(t => t !== text);
+  saveState();
+  renderProfile();
+}
+
+function saveProfileEdits() {
+  state.profile.name = document.getElementById("profileName").value || "Jake";
+  state.profile.height = document.getElementById("profileHeight").value;
+  state.profile.weight = document.getElementById("profileWeight").value;
+  saveState();
+  alert("Profile saved!");
+  goTo("home");
+}
+
+function showResetModal() { document.getElementById("resetModal").classList.add("active"); }
+function showDeleteModal() { document.getElementById("deleteModal").classList.add("active"); }
+function closeModal(id) { document.getElementById(id).classList.remove("active"); }
+
+function confirmReset() {
+  state.logs = [];
+  state.liftLogs = {};
+  state.streak = 0;
+  state.chat = defaultState.chat;
+  state.warmupDone = [false,false,false,false,false];
+  state.currentStage = 0;
+  state.stageReps = {0:[], 1:[], 2:[]};
+  state.recovery = { sleep: 5, soreness: 5, energy: 5, mood: 5, notes: "", date: null };
+  saveState();
+  closeModal("resetModal");
+  alert("All training data reset. Your profile is still here.");
+  goTo("home");
+}
+
+function confirmDelete() {
+  localStorage.removeItem("wsp_state");
+  location.reload();
+}
+
+function renderHome() {
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  document.getElementById("homeDay").textContent = days[new Date().getDay()];
+  document.getElementById("homeName").textContent = state.profile.name.split(" ")[0];
+  document.getElementById("streakCount").textContent = state.streak + " day streak";
+  const av = document.getElementById("homeAvatar");
+  if (state.profile.photo) {
+    av.innerHTML = '<img src="' + state.profile.photo + '">';
+  } else {
+    av.textContent = state.profile.name.split(" ").map(n=>n[0]).join("").substring(0,2).toUpperCase();
+  }
+  const today = new Date().getDay();
+  const todayProgram = weekDays[today];
+  document.getElementById("todaySession").textContent = todayProgram.type;
+  document.getElementById("todaySub").textContent = "Week " + state.currentWeek + ", Block " + state.currentBlock;
+  const recent = state.logs.slice(-3);
+  const tightCount = recent.filter(l => l.spiral === "Tight").length;
+  let note = "Your 14-15 YD spiral has been tight three sessions in a row. That follow-through fix is sticking — keep driving through.";
+  if (tightCount === 0 && recent.length > 0) note = "Your last few sessions show wobble at distance. Let's revisit the follow-through drill before your next snap day.";
+  else if (state.profile.flaws.includes("Spiral Wobble") && tightCount >= 2) note = "Spiral wobble is clearing up. The hip rotation work is showing in your 14-15 YD reps. Keep it consistent.";
+  if (state.recovery.date) {
+    const r = state.recovery;
+    if (r.soreness >= 8) note = "Your soreness is high today. Drop the accessory work, do the main lift only, and spend 10 extra minutes on hip mobility.";
+    else if (r.sleep <= 4) note = "Sleep was rough last night. Keep the weight the same — do not chase PRs today. Focus on bar speed and call it after your main sets.";
+    else if (r.energy <= 4) note = "Energy is low. This is a grind day — lower the volume by one set across all lifts and prioritize the snap warmup.";
+    else if (r.soreness <= 3 && r.energy >= 8 && r.sleep >= 8) note = "You are recovered and ready. Today is a good day to push for a weight PR or extra snap reps at 14-15 YD.";
+  }
+  document.getElementById("coachNoteText").textContent = note;
+}
+
+function startSession() { goTo("log"); }
+
+function openRecoveryModal() {
+  if (state.recovery.date) {
+    document.getElementById("sleepSlider").value = state.recovery.sleep;
+    document.getElementById("sleepVal").textContent = state.recovery.sleep;
+    document.getElementById("soreSlider").value = state.recovery.soreness;
+    document.getElementById("soreVal").textContent = state.recovery.soreness;
+    document.getElementById("energySlider").value = state.recovery.energy;
+    document.getElementById("energyVal").textContent = state.recovery.energy;
+    document.getElementById("moodSlider").value = state.recovery.mood;
+    document.getElementById("moodVal").textContent = state.recovery.mood;
+    document.getElementById("recoveryNotes").value = state.recovery.notes || "";
+  }
+  document.getElementById("recoveryModal").classList.add("active");
+}
+
+function closeRecoveryModal() {
+  document.getElementById("recoveryModal").classList.remove("active");
+}
+
+function saveRecovery() {
+  state.recovery = {
+    sleep: parseInt(document.getElementById("sleepSlider").value),
+    soreness: parseInt(document.getElementById("soreSlider").value),
+    energy: parseInt(document.getElementById("energySlider").value),
+    mood: parseInt(document.getElementById("moodSlider").value),
+    notes: document.getElementById("recoveryNotes").value,
+    date: new Date().toISOString()
+  };
+  saveState();
+  closeRecoveryModal();
+  updateRecoveryStatus();
+  alert("Recovery logged. Your coach will factor this into today's advice.");
+}
+
+function updateRecoveryStatus() {
+  const el = document.getElementById("recoveryStatus");
+  if (state.recovery.date) {
+    const d = new Date(state.recovery.date);
+    const today = new Date();
+    const sameDay = d.toDateString() === today.toDateString();
+    if (sameDay) {
+      const avg = Math.round((state.recovery.sleep + state.recovery.energy + state.recovery.mood + (10 - state.recovery.soreness)) / 4);
+      let status = "Ready to work";
+      if (avg >= 8) status = "Fully recovered — push day";
+      else if (avg >= 6) status = "Good to go";
+      else if (avg >= 4) status = "Moderate — watch volume";
+      else status = "Low recovery — take it easy";
+      el.textContent = status + " (" + avg + "/10)";
+    } else {
+      el.textContent = "Last check-in: " + d.toLocaleDateString() + " — tap to update";
+    }
+  }
+}
+
+const warmups = ["Deep squat hold","Elephant walks","Knee sits","Squat jumps","5 minute jog"];
+const stages = [
+  {dist:"10 YD", reps:2, time:false},
+  {dist:"12 YD", reps:2, time:false},
+  {dist:"14-15 YD", reps:6, time:true}
+];
+
+function renderLog() {
+  document.getElementById("snapDate").textContent = new Date().toLocaleDateString("en-US", {month:"short", day:"numeric"});
+  document.getElementById("snapDayHeader").textContent = "Snap Day " + state.snapDayCount + " of 3";
+  const wl = document.getElementById("warmupList");
+  wl.innerHTML = "";
+  warmups.forEach((w,i) => {
+    const done = state.warmupDone[i] ? "done" : "";
+    wl.innerHTML += '<li><div class="check ' + done + '" onclick="toggleCheck(this,\'warmup\',' + i + ')"></div> ' + w + '</li>';
+  });
+  document.querySelectorAll(".stage-item").forEach((el, i) => {
+    el.classList.remove("active","done");
+    if (i < state.currentStage) el.classList.add("done");
+    if (i === state.currentStage) el.classList.add("active");
+    const reps = state.stageReps[i] || [];
+    if (reps.length >= stages[i].reps) {
+      el.classList.add("done");
+      el.querySelector(".reps").innerHTML = reps.length + " reps ✓";
+    } else {
+      el.querySelector(".reps").innerHTML = reps.length + "/" + stages[i].reps + " reps";
+    }
+  });
+  const container = document.getElementById("repContainer");
+  container.innerHTML = "";
+  const stage = stages[state.currentStage];
+  const reps = state.stageReps[state.currentStage] || [];
+  for (let i = 0; i < stage.reps; i++) {
+    const rep = reps[i] || {};
+    const hasVid = rep.video ? "has-video" : "";
+    const vidContent = rep.video ? '<img src="' + rep.video + '">' : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-bottom:6px"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><div>Upload video</div>';
+    const wobble = rep.spiral === "Wobble" ? "active" : "";
+    const tight = rep.spiral === "Tight" ? "active" : "";
+    const flat = rep.spiral === "Flat" ? "active" : "";
+    const timeField = stage.time ? '<div style="margin-top:10px;"><label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px;">Time (seconds)</label><input type="text" class="time-input" id="time_' + i + '" placeholder="0.75" value="' + (rep.time || "") + '"></div>' : "";
+    container.innerHTML += '<div class="rep-card"><div class="rep-header"><span>Rep ' + (i+1) + ' · ' + stage.dist + '</span></div><div class="video-box ' + hasVid + '" onclick="triggerVideo(' + i + ')">' + vidContent + '</div><input type="file" accept="video/*" class="hidden-file" id="vid_' + i + '" onchange="handleVideo(event,' + i + ')"><div class="quality"><button class="quality-btn ' + wobble + '" onclick="setSpiral(' + i + ',\'Wobble\')">Wobble</button><button class="quality-btn ' + tight + '" onclick="setSpiral(' + i + ',\'Tight\')">Tight</button><button class="quality-btn ' + flat + '" onclick="setSpiral(' + i + ',\'Flat\')">Flat</button></div>' + timeField + '</div>';
+  }
+  const fb = document.getElementById("logFeedback");
+  if (state.currentStage > 0) {
+    const prev = state.stageReps[state.currentStage-1] || [];
+    const tight = prev.filter(r => r.spiral === "Tight").length;
+    if (tight === prev.length && prev.length > 0) fb.innerHTML = '<div class="feedback">' + stages[state.currentStage-1].dist + ' complete: all reps rated Tight. Clean stage.</div>';
+    else if (prev.length > 0) fb.innerHTML = '<div class="feedback negative">' + stages[state.currentStage-1].dist + ' complete: ' + (prev.length-tight) + ' reps need work. Check the drill videos.</div>';
+    else fb.innerHTML = "";
+  } else fb.innerHTML = "";
+  const btn = document.getElementById("saveLogBtn");
+  if (state.currentStage >= 2) btn.textContent = "Save & Finish Session";
+  else btn.textContent = "Save & Continue to " + stages[state.currentStage+1].dist;
+}
+
+function
