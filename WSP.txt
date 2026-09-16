@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WSP — Long Snapper Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Inter:wght@400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #1B1B1A; --card: #252423; --text: #EDEBE6; --dim: #8F8B84; --accent: #B8AFA0; --border: rgba(237,235,230,0.10); --danger: #c45a5a; --positive: #6ab78a; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100%; overflow: hidden; }
+  #app { max-width: 480px; margin: 0 auto; height: 100vh; position: relative; background: var(--bg); display: flex; flex-direction: column; }
+  .screen { display: none; flex: 1; overflow-y: auto; padding: 20px 16px 90px; animation: fadeIn 0.3s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  h1, h2, h3 { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .header h1 { font-size: 22px; font-weight: 700; }
+  .header .sub { font-size: 12px; color: var(--dim); margin-top: 2px; font-family: 'Inter', sans-serif; text-transform: none; letter-spacing: 0; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--bg); font-family: 'Barlow Condensed', sans-serif; }
+  .avatar-lg { width: 90px; height: 90px; border-radius: 50%; background: var(--card); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--dim); cursor: pointer; overflow: hidden; margin: 0 auto 20px; }
+  .avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 13px; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
+  .card-value { font-size: 26px; font-weight: 500; color: var(--text); margin: 0; line-height: 1.1; font-family: 'Barlow Condensed', sans-serif; }
+  .card-sub { font-size: 13px; color: var(--dim); margin-top: 6px; line-height: 1.4; }
+  .btn { background: var(--accent); color: var(--bg); border: none; border-radius: 10px; padding: 14px 20px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 14px; font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; transition: filter 0.2s; }
+  .btn:hover { filter: brightness(1.1); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; display: inline-block; }
+  .tabs { position: absolute; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 6px 0 14px; z-index: 100; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--dim); font-size: 10px; cursor: pointer; padding: 4px 6px; transition: color 0.2s; font-family: 'Inter', sans-serif; }
+  .tab.active { color: var(--accent); }
+  .tab svg { width: 22px; height: 22px; }
+  .tag { display: inline-flex; align-items: center; gap: 4px; background: rgba(184,175,160,0.12); color: var(--accent); padding: 5px 10px; border-radius: 6px; font-size: 12px; margin: 0 4px 6px 0; }
+  .tag .remove { cursor: pointer; opacity: 0.6; font-weight: 700; }
+  .tag .remove:hover { opacity: 1; }
+  .tag-input { background: transparent; border: 1px dashed var(--border); color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 12px; width: 100px; outline: none; font-family: 'Inter', sans-serif; }
+  .tag-input::placeholder { color: var(--dim); }
+  .input-group { margin-bottom: 16px; }
+  .input-group label { display: block; font-size: 12px; color: var(--dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .input-group input, .input-group select { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font-size: 15px; outline: none; font-family: 'Inter', sans-serif; }
+  .input-group input:focus { border-color: var(--accent); }
+  .input-row { display: flex; gap: 12px; }
+  .input-row .input-group { flex: 1; }
+  .checklist { list-style: none; padding: 0; margin: 0; }
+  .checklist li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .checklist li:last-child { border-bottom: none; }
+  .check { width: 20px; height: 20px; border: 2px solid var(--dim); border-radius: 5px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+  .check.done { background: var(--accent); border-color: var(--accent); }
+  .check.done::after { content: "✓"; color: var(--bg); font-weight: 700; font-size: 12px; }
+  .stage { display: flex; gap: 8px; margin: 16px 0; }
+  .stage-item { flex: 1; text-align: center; padding: 14px 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); position: relative; }
+  .stage-item.active { border-color: var(--accent); background: rgba(184,175,160,0.06); }
+  .stage-item.done { border-color: rgba(184,175,160,0.3); opacity: 0.6; }
+  .stage-item .dist { font-size: 18px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; display: block; }
+  .stage-item .reps { font-size: 11px; color: var(--dim); margin-top: 4px; font-family: 'Space Mono', monospace; }
+  .rep-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .rep-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .rep-header span { font-size: 14px; font-weight: 500; }
+  .video-box { background: rgba(237,235,230,0.03); border: 1px dashed var(--border); border-radius: 8px; padding: 24px; text-align: center; color: var(--dim); font-size: 13px; cursor: pointer; margin-bottom: 10px; transition: background 0.2s; position: relative; overflow: hidden; }
+  .video-box:hover { background: rgba(237,235,230,0.06); }
+  .video-box.has-video { border-style: solid; border-color: var(--accent); background: rgba(184,175,160,0.05); }
+  .video-box img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 6px; }
+  .quality { display: flex; gap: 6px; flex-wrap: wrap; }
+  .quality-btn { padding: 7px 14px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--dim); font-size: 12px; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+  .quality-btn.active { background: rgba(184,175,160,0.15); color: var(--accent); border-color: var(--accent); }
+  .lift-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .lift-row:last-child { border-bottom: none; }
+  .lift-name { font-size: 15px; font-weight: 500; }
+  .lift-meta { font-size: 12px; color: var(--dim); margin-top: 3px; font-family: 'Space Mono', monospace; }
+  .lift-inputs { display: flex; gap: 8px; align-items: center; }
+  .lift-inputs input { width: 58px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; color: var(--text); font-size: 14px; text-align: center; outline: none; font-family: 'Space Mono', monospace; }
+  .lift-inputs span { color: var(--dim); font-size: 12px; }
+  .lift-inputs .log-btn { background: var(--accent); color: var(--bg); border: none; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  .day-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; border-radius: 10px; margin-bottom: 6px; cursor: pointer; transition: background 0.2s; border: 1px solid transparent; }
+  .day-row:hover { background: var(--card); }
+  .day-row.active { background: var(--card); border-color: var(--border); }
+  .day-name { font-size: 15px; font-weight: 500; }
+  .day-type { font-size: 13px; color: var(--dim); margin-top: 2px; }
+  .day-badge { font-size: 11px; padding: 3px 10px; border-radius: 4px; background: rgba(184,175,160,0.12); color: var(--accent); font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  .day-badge.rest { background: rgba(143,139,132,0.12); color: var(--dim); }
+  .article-card { cursor: pointer; transition: transform 0.2s; }
+  .article-card:hover { transform: translateY(-1px); }
+  .article-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; line-height: 1.3; }
+  .article-excerpt { font-size: 13px; color: var(--dim); line-height: 1.45; }
+  .article-meta { font-size: 11px; color: var(--dim); margin-top: 10px; font-family: 'Space Mono', monospace; }
+  .category-header { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin: 20px 0 10px; padding: 0 4px; font-weight: 500; }
+  .chat { display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
+  .chat-bubble { max-width: 88%; padding: 12px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; animation: popIn 0.25s ease; }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  .chat-bubble.ai { background: var(--card); border: 1px solid var(--border); align-self: flex-start; }
+  .chat-bubble.user { background: var(--accent); color: var(--bg); align-self: flex-end; font-weight: 500; }
+  .chat-input-wrap { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .chat-input-wrap input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 14px; outline: none; }
+  .chat-input-wrap button { background: var(--accent); border: none; border-radius: 10px; padding: 10px 18px; color: var(--bg); font-weight: 700; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  .stat-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .stat-box { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 8px; text-align: center; }
+  .stat-box .num { font-size: 26px; font-weight: 700; color: var(--accent); font-family: 'Barlow Condensed', sans-serif; }
+  .stat-box .label { font-size: 10px; color: var(--dim); margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+  .chart-container { margin: 16px 0; }
+  .chart-bar-wrap { display: flex; align-items: flex-end; gap: 6px; height: 130px; padding-bottom: 28px; border-bottom: 1px solid var(--border); position: relative; }
+  .chart-bar { flex: 1; background: var(--accent); border-radius: 4px 4px 0 0; opacity: 0.75; transition: opacity 0.2s; position: relative; min-height: 4px; }
+  .chart-bar:hover { opacity: 1; }
+  .chart-bar .val { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--accent); font-weight: 700; font-family: 'Space Mono', monospace; white-space: nowrap; }
+  .chart-bar .label { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--dim); white-space: nowrap; font-family: 'Space Mono', monospace; }
+  .chart-note { font-size: 12px; color: var(--dim); margin-top: 10px; line-height: 1.4; }
+  .feedback { background: rgba(184,175,160,0.06); border-left: 3px solid var(--accent); padding: 12px 14px; border-radius: 0 10px 10px 0; font-size: 13px; color: var(--accent); margin: 12px 0; line-height: 1.45; }
+  .feedback.negative { border-left-color: var(--danger); color: var(--danger); background: rgba(196,90,90,0.06); }
+  .quick-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+  .quick-action { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 8px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+  .quick-action:hover { border-color: rgba(184,175,160,0.3); }
+  .quick-action svg { width: 22px; height: 22px; color: var(--accent); margin-bottom: 6px; }
+  .quick-action span { display: block; font-size: 12px; color: var(--text); font-weight: 500; }
+  .teaser { background: rgba(184,175,160,0.06); border: 1px solid rgba(184,175,160,0.15); border-radius: 10px; padding: 14px; font-size: 13px; color: var(--accent); cursor: pointer; margin: 10px 0; line-height: 1.45; transition: background 0.2s; }
+  .teaser:hover { background: rgba(184,175,160,0.1); }
+  .section-title { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin: 24px 0 10px; font-weight: 500; }
+  .coach-note { border-left: 3px solid var(--accent); padding-left: 14px; }
+  .coach-note p { margin: 0; font-size: 13px; color: var(--dim); line-height: 1.5; }
+  .coach-note strong { color: var(--accent); font-weight: 500; }
+  .drill-card { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+  .drill-thumb { width: 52px; height: 52px; background: rgba(237,235,230,0.04); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .drill-thumb svg { width: 22px; height: 22px; color: var(--accent); }
+  .drill-title { font-size: 14px; font-weight: 500; }
+  .drill-meta { font-size: 12px; color: var(--dim); margin-top: 2px; font-family: 'Space Mono', monospace; }
+  .splash { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; text-align: center; padding-bottom: 80px; }
+  .splash-logo { font-size: 56px; font-weight: 700; letter-spacing: 6px; color: var(--text); font-family: 'Barlow Condensed', sans-serif; margin-bottom: 8px; }
+  .splash-sub { font-size: 13px; color: var(--dim); letter-spacing: 3px; text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; }
+  .splash-bar { width: 180px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 32px; }
+  .splash-bar .fill { height: 100%; background: var(--accent); border-radius: 2px; width: 0; transition: width 1.5s ease; }
+  .splash-text { font-size: 13px; color: var(--dim); margin-top: 14px; }
+  .hidden-file { display: none; }
+  ::-webkit-scrollbar { width: 0; background: transparent; }
+</style>
+</head>
+<body>
+<div id="app">
+<!-- SPLASH -->
+<div class="screen active" id="screen-splash">
+  <div class="splash">
+    <div class="splash-logo">WSP</div>
+    <div class="splash-sub">Long Snapper Training</div>
+    <div class="splash-bar"><div class="fill" id="splashFill"></div></div>
+    <div class="splash-text">Loading your program</div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div class="screen" id="screen-onboard">
+  <div style="text-align: center; margin-bottom: 8px;">
+    <div style="font-size: 32px; font-weight: 700; letter-spacing: 4px; font-family: 'Barlow Condensed', sans-serif;">WSP</div>
+    <p style="font-size: 13px; color: var(--dim); margin: 4px 0 0;">Create your athlete profile</p>
+  </div>
+  <div class="avatar-lg" id="avatarPreview" onclick="document.getElementById('photoInput').click()">
+    <span id="avatarText">Add Photo</span>
+    <img id="avatarImg" style="display:none;">
+  </div>
+  <input type="file" accept="image/*" class="hidden-file" id="photoInput" onchange="handlePhoto(event)">
+  <div class="input-row">
+    <div class="input-group"><label>Height</label><input type="text" id="heightInput" placeholder="6'2&quot;" value="6'2&quot;"></div>
+    <div class="input-group"><label>Weight</label><input type="text" id="weightInput" placeholder="215 lbs" value="215 lbs"></div>
+  </div>
+  <div class="input-group"><label>Name</label><input type="text" id="nameInput" placeholder="Jake Williams" value="Jake Williams"></div>
+  <div class="section-title">Strengths</div>
+  <div id="strengthsTags">
+    <span class="tag">Ball Speed <span class="remove" onclick="removeTag(this,'strengths')">×</span></span>
+    <span class="tag">Consistency <span class="remove" onclick="removeTag(this,'strengths')">×</span></span>
+    <input type="text" class="tag-input" placeholder="+ Add tag" onkeypress="handleTagKey(event,'strengths')">
+  </div>
+  <div class="section-title">Flaws</div>
+  <div id="flawsTags">
+    <span class="tag">Spiral Wobble <span class="remove" onclick="removeTag(this,'flaws')">×</span></span>
+    <span class="tag">Short Follow-Through <span class="remove" onclick="removeTag(this,'flaws')">×</span></span>
+    <input type="text" class="tag-input" placeholder="+ Add tag" onkeypress="handleTagKey(event,'flaws')">
+  </div>
+  <div class="teaser" onclick="goTo('chat')">Not sure what to list? Chat with your coach instead of typing tags →</div>
+  <button class="btn" onclick="saveProfile()">Create Profile</button>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="screen-home">
+  <div class="header">
+    <div>
+      <div class="sub" id="homeDay">Tuesday</div>
+      <h1>Welcome back, <span id="homeName">Jake</span></h1>
+    </div>
+    <div class="avatar" id="homeAvatar">JW</div>
+  </div>
+  <div class="streak">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    <span id="streakCount">12 day streak</span>
+  </div>
+  <div class="card">
+    <div class="card-title">Today's Session</div>
+    <div class="card-value" style="font-size: 20px;">Squat B + Top Speed + Snaps</div>
+    <div class="card-sub">Week 3, Block 2 · Sprints before lift, snapping after</div>
+    <button class="btn" onclick="startSession()">Start Today's Session</button>
+  </div>
+  <div class="quick-actions">
+    <div class="quick-action" onclick="goTo('log')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      <span>Log Snap</span>
+    </div>
+    <div class="quick-action" onclick="goTo('program')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Program</span>
+    </div>
+    <div class="quick-action" onclick="goTo('chat')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>Coach</span>
+    </div>
+  </div>
+  <div class="card coach-note">
+    <p><strong>Coach Note</strong></p>
+    <p id="coachNoteText">Your 14–15 YD spiral has been tight three sessions in a row. That follow-through fix is sticking — keep driving through.</p>
+  </div>
+</div>
+
+<!-- LOG SNAP -->
+<div class="screen" id="screen-log">
+  <div class="header">
+    <div>
+      <div class="sub" id="snapDayHeader">Snap Day 2 of 3</div>
+      <h1>Log Session</h1>
+    </div>
+    <span style="font-size: 13px; color: var(--dim);" id="snapDate">Aug 19</span>
+  </div>
+  <div class="card">
+    <div class="card-title">Snap Warmup (Barefoot)</div>
+    <ul class="checklist" id="warmupList">
+      <li><div class="check" onclick="toggleCheck(this, 'warmup', 0)"></div> Deep squat hold</li>
+      <li><div class="check" onclick="toggleCheck(this, 'warmup', 1)"></div> Elephant walks</li>
+      <li><div class="check" onclick="toggleCheck(this, 'warmup', 2)"></div> Knee sits</li>
+      <li><div class="check" onclick="toggleCheck(this, 'warmup', 3)"></div> Squat jumps</li>
+      <li><div class="check" onclick="toggleCheck(this, 'warmup', 4)"></div> 5 minute jog</li>
+    </ul>
+  </div>
+  <div class="stage" id="stageSelector">
+    <div class="stage-item" data-stage="0" onclick="selectStage(0)"><span class="dist">10 YD</span><span class="reps">2 reps</span></div>
+    <div class="stage-item" data-stage="1" onclick="selectStage(1)"><span class="dist">12 YD</span><span class="reps">2 reps</span></div>
+    <div class="stage-item active" data-stage="2" onclick="selectStage(2)"><span class="dist">14–15 YD</span><span class="reps">5–7 reps</span></div>
+  </div>
+  <div id="repContainer"></div>
+  <div id="logFeedback"></div>
+  <button class="btn" id="saveLogBtn" onclick="saveLogStage()">Save & Continue</button>
+  <button class="btn btn-secondary" style="margin-top: 8px;" onclick="finishLog()">Finish Session</button>
+</div>
+
+<!-- PROGRAM -->
+<div class="screen" id="screen-program">
+  <div class="header">
+    <h1>Program</h1>
+    <span style="font-size: 13px; color: var(--dim);">Block 2 · Week 3</span>
+  </div>
+  <div id="programDays"></div>
+  <div id="programDetail" style="display:none;">
+    <div class="section-title" id="detailTitle">Wednesday</div>
+    <div class="card">
+      <div class="card-title">Warmup</div>
+      <ul class="checklist" id="dayWarmup"></ul>
+    </div>
+    <div class="card" style="padding: 0 16px;">
+      <div class="card-title" style="padding-top: 16px;">Lifts</div>
+      <div id="dayLifts"></div>
+    </div>
+    <div id="snapDrillsSection" style="display:none;">
+      <div class="section-title">Snap Drills</div>
+      <div id="drillList"></div>
+    </div>
+    <button class="btn btn-secondary" onclick="showProgramList()" style="margin-top: 8px;">← Back to Week</button>
+  </div>
+</div>
+<!-- PROGRESS -->
+<div class="screen" id="screen-progress">
+  <div class="header"><h1>Progress</h1></div>
+  <div class="stat-row">
+    <div class="stat-box"><div class="num" id="prSquat">315</div><div class="label">Squat PR</div></div>
+    <div class="stat-box"><div class="num" id="prSnap">0.72s</div><div class="label">Best 14–15 YD</div></div>
+    <div class="stat-box"><div class="num" id="prStreak">12</div><div class="label">Day Streak</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Back Squat · Block 2</div>
+    <div class="chart-container"><div class="chart-bar-wrap" id="squatChart"></div></div>
+    <div class="chart-note">Trending up +30 lbs this block. Deload next week.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Spiral Consistency · 14–15 YD</div>
+    <div class="chart-container"><div class="chart-bar-wrap" id="spiralChart"></div></div>
+    <div class="chart-note">Tight spiral rate climbing since fixing follow-through.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Sprint Times · Acceleration</div>
+    <div class="chart-container"><div class="chart-bar-wrap" id="sprintChart"></div></div>
+    <div class="chart-note">10m fly times improving. Speed work paying off.</div>
+  </div>
+</div>
+
+<!-- LEARN -->
+<div class="screen" id="screen-learn">
+  <div class="header"><h1>Learn</h1></div>
+  <div class="category-header">Mentality</div>
+  <div class="card article-card" onclick="alert('Article: Playing After a Bad Snap')">
+    <div class="article-title">Playing After a Bad Snap</div>
+    <div class="article-excerpt">The next rep starts fresh. How elite snappers reset mentally in under 10 seconds.</div>
+    <div class="article-meta">4 min read</div>
+  </div>
+  <div class="card article-card" onclick="alert('Article: Building a Pregame Routine')">
+    <div class="article-title">Building a Pregame Routine</div>
+    <div class="article-excerpt">A repeatable sequence that locks in confidence before you step on the field.</div>
+    <div class="article-meta">6 min read</div>
+  </div>
+  <div class="card article-card" onclick="alert('Article: Staying Confident After a Bad Rep')">
+    <div class="article-title">Staying Confident After a Bad Rep</div>
+    <div class="article-excerpt">One bad ball does not define a session. Mental reframes that actually work.</div>
+    <div class="article-meta">5 min read</div>
+  </div>
+  <div class="category-header">Getting Recruited</div>
+  <div class="card article-card" onclick="alert('Article: Making Film Clips That Get Watched')">
+    <div class="article-title">Making Film Clips That Get Watched</div>
+    <div class="article-excerpt">Coaches scroll fast. Front-load your best 3 snaps in the first 15 seconds.</div>
+    <div class="article-meta">5 min read</div>
+  </div>
+  <div class="card article-card" onclick="alert('Article: What Camps Are Worth Your Time')">
+    <div class="article-title">What Camps Are Worth Your Time</div>
+    <div class="article-excerpt">Not all exposure events are equal. A breakdown of ROI by camp type.</div>
+    <div class="article-meta">7 min read</div>
+  </div>
+  <div class="card article-card" onclick="alert('Article: Talking to College Coaches')">
+    <div class="article-title">Talking to College Coaches</div>
+    <div class="article-excerpt">What to say, what not to say, and when to reach out.</div>
+    <div class="article-meta">6 min read</div>
+  </div>
+  <div class="category-header">Recovery & Injury Prevention</div>
+  <div class="card article-card" onclick="alert('Article: Sleep Is Part of Training')">
+    <div class="article-title">Sleep Is Part of Training</div>
+    <div class="article-excerpt">If you are not getting 8+ hours, you are leaving strength on the table.</div>
+    <div class="article-meta">4 min read</div>
+  </div>
+  <div class="card article-card" onclick="alert('Article: Common Long Snapper Injuries')">
+    <div class="article-title">Common Long Snapper Injuries</div>
+    <div class="article-excerpt">Lower back, hip flexor, and forearm issues — and how to avoid them.</div>
+    <div class="article-meta">8 min read</div>
+  </div>
+  <div class="category-header">Weight Gain</div>
+  <div class="card article-card" onclick="alert('Article: Calorie Surplus 101')">
+    <div class="article-title">Calorie Surplus 101</div>
+    <div class="article-excerpt">How to eat enough without force-feeding. Practical guide for high school athletes.</div>
+    <div class="article-meta">6 min read</div>
+  </div>
+  <div class="card article-card" onclick="alert('Article: Best Post-Workout Meals for Gains')">
+    <div class="article-title">Best Post-Workout Meals for Gains</div>
+    <div class="article-excerpt">Protein + carb combos that are easy to pack and actually taste good.</div>
+    <div class="article-meta">5 min read</div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="screen" id="screen-chat">
+  <div class="header"><h1>Coach</h1></div>
+  <div class="chat" id="chatHistory">
+    <div class="chat-bubble ai">Hey Jake. I see you listed "Short Follow-Through" as a flaw and your 12 YD reps today were both Tight. Before we move to 14–15 YD, want to work on that extension drill?</div>
+    <div class="chat-bubble user">Yeah, I feel like I'm cutting off my finish at game distance.</div>
+    <div class="chat-bubble ai">Your video from last Friday's 14–15 YD session shows exactly that — hips stop rotating at 80%. Try the Hip Rotation Drill in your Snap Drills section before your next session. Two reps, slow motion, full extension.</div>
+  </div>
+  <div class="chat-input-wrap">
+    <input type="text" id="chatInput" placeholder="Ask your coach..." onkeypress="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()">Send</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="goTo('home')" data-tab="home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+  </button>
+  <button class="tab" onclick="goTo('log')" data-tab="log">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Log
+  </button>
+  <button class="tab" onclick="goTo('program')" data-tab="program">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Program
+  </button>
+  <button class="tab" onclick="goTo('progress')" data-tab="progress">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Progress
+  </button>
+  <button class="tab" onclick="goTo('learn')" data-tab="learn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Learn
+  </button>
+  <button class="tab" onclick="goTo('chat')" data-tab="chat">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Coach
+  </button>
+</div>
+
+</div>
+<script>
+const defaultState = {
+  profile: { name: 'Jake Williams', height: "6'2\"", weight: '215 lbs', photo: null, strengths: ['Ball Speed','Consistency'], flaws: ['Spiral Wobble','Short Follow-Through'], created: false },
+  streak: 12, currentBlock: 2, currentWeek: 3, snapDayCount: 2,
+  logs: [], liftLogs: {},
+  chat: [
+    {sender:'ai', text:"Hey Jake. I see you listed \"Short Follow-Through\" as a flaw and your 12 YD reps today were both Tight. Before we move to 14–15 YD, want to work on that extension drill?"},
+    {sender:'user', text:"Yeah, I feel like I'm cutting off my finish at game distance."},
+    {sender:'ai', text:"Your video from last Friday's 14–15 YD session shows exactly that — hips stop rotating at 80%. Try the Hip Rotation Drill in your Snap Drills section before your next session. Two reps, slow motion, full extension."}
+  ],
+  warmupDone: [false,false,false,false,false], currentStage: 2, stageReps: {0:[], 1:[], 2:[]}
+};
+let state = JSON.parse(JSON.stringify(defaultState));
+function loadState() { const saved = localStorage.getItem('wsp_state'); if (saved) { try { state = JSON.parse(saved); } catch(e) {} } }
+function saveState() { localStorage.setItem('wsp_state', JSON.stringify(state)); }
+loadState();
+
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector('.tab[data-tab="' + screen + '"]');
+  if (tab) tab.classList.add('active');
+  if (screen === 'progress') renderProgress();
+  if (screen === 'program') renderProgram();
+  if (screen === 'chat') renderChat();
+  if (screen === 'log') renderLog();
+  if (screen === 'home') renderHome();
+  window.scrollTo(0,0);
+}
+
+setTimeout(() => { document.getElementById('splashFill').style.width = '100%'; }, 100);
+setTimeout(() => { if (!state.profile.created) goTo('onboard'); else goTo('home'); }, 1600);
+
+function handlePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    state.profile.photo = ev.target.result;
+    document.getElementById('avatarImg').src = ev.target.result;
+    document.getElementById('avatarImg').style.display = 'block';
+    document.getElementById('avatarText').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleTagKey(e, type) {
+  if (e.key === 'Enter' && e.target.value.trim()) {
+    const container = type === 'strengths' ? document.getElementById('strengthsTags') : document.getElementById('flawsTags');
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = e.target.value.trim() + ' <span class="remove" onclick="removeTag(this,\''+type+'\')">×</span>';
+    container.insertBefore(tag, e.target);
+    state.profile[type].push(e.target.value.trim());
+    e.target.value = '';
+    saveState();
+  }
+}
+
+function removeTag(el, type) {
+  const text = el.parentNode.textContent.replace('×','').trim();
+  state.profile[type] = state.profile[type].filter(t => t !== text);
+  el.parentNode.remove();
+  saveState();
+}
+
+function saveProfile() {
+  state.profile.name = document.getElementById('nameInput').value || 'Jake';
+  state.profile.height = document.getElementById('heightInput').value;
+  state.profile.weight = document.getElementById('weightInput').value;
+  state.profile.created = true;
+  saveState();
+  goTo('home');
+}
+
+function renderHome() {
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('homeDay').textContent = days[new Date().getDay()];
+  document.getElementById('homeName').textContent = state.profile.name.split(' ')[0];
+  document.getElementById('streakCount').textContent = state.streak + ' day streak';
+  const av = document.getElementById('homeAvatar');
+  if (state.profile.photo) {
+    av.innerHTML = '<img src="'+state.profile.photo+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  } else {
+    av.textContent = state.profile.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+  }
+  const recent = state.logs.slice(-3);
+  const tightCount = recent.filter(l => l.spiral === 'Tight').length;
+  let note = "Your 14–15 YD spiral has been tight three sessions in a row. That follow-through fix is sticking — keep driving through.";
+  if (tightCount === 0 && recent.length > 0) note = "Your last few sessions show wobble at distance. Let's revisit the follow-through drill before your next snap day.";
+  else if (state.profile.flaws.includes('Spiral Wobble') && tightCount >= 2) note = "Spiral wobble is clearing up. The hip rotation work is showing in your 14–15 YD reps. Keep it consistent.";
+  document.getElementById('coachNoteText').textContent = note;
+}
+
+function startSession() { goTo('log'); }
+
+const warmups = ['Deep squat hold','Elephant walks','Knee sits','Squat jumps','5 minute jog'];
+const stages = [
+  {dist:'10 YD', reps:2, time:false},
+  {dist:'12 YD', reps:2, time:false},
+  {dist:'14–15 YD', reps:6, time:true}
+];
+
+function renderLog() {
+  document.getElementById('snapDate').textContent = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  document.getElementById('snapDayHeader').textContent = 'Snap Day ' + state.snapDayCount + ' of 3';
+  const wl = document.getElementById('warmupList');
+  wl.innerHTML = '';
+  warmups.forEach((w,i) => {
+    const done = state.warmupDone[i] ? 'done' : '';
+    wl.innerHTML += '<li><div class="check '+done+'" onclick="toggleCheck(this,\'warmup\','+i+')"></div> '+w+'</li>';
+  });
+  document.querySelectorAll('.stage-item').forEach((el, i) => {
+    el.classList.remove('active','done');
+    if (i < state.currentStage) el.classList.add('done');
+    if (i === state.currentStage) el.classList.add('active');
+    const reps = state.stageReps[i] || [];
+    if (reps.length >= stages[i].reps) {
+      el.classList.add('done');
+      el.querySelector('.reps').innerHTML = reps.length + ' reps ✓';
+    } else {
+      el.querySelector('.reps').innerHTML = reps.length + '/' + stages[i].reps + ' reps';
+    }
+  });
+  const container = document.getElementById('repContainer');
+  container.innerHTML = '';
+  const stage = stages[state.currentStage];
+  const reps = state.stageReps[state.currentStage] || [];
+  for (let i = 0; i < stage.reps; i++) {
+    const rep = reps[i] || {};
+    const hasVid = rep.video ? 'has-video' : '';
+    const vidContent = rep.video ? '<img src="'+rep.video+'">' : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-bottom:6px"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><div>Upload video</div>';
+    const wobble = rep.spiral === 'Wobble' ? 'active' : '';
+    const tight = rep.spiral === 'Tight' ? 'active' : '';
+    const flat = rep.spiral === 'Flat' ? 'active' : '';
+    const timeField = stage.time ? '<div style="margin-top:10px;"><label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px;">Time (seconds)</label><input type="text" class="time-input" id="time_'+i+'" placeholder="0.75" value="'+ (rep.time || '') +'"></div>' : '';
+    container.innerHTML += '<div class="rep-card"><div class="rep-header"><span>Rep '+(i+1)+' · '+stage.dist+'</span></div><div class="video-box '+hasVid+'" onclick="triggerVideo('+i+')">'+vidContent+'</div><input type="file" accept="video/*" class="hidden-file" id="vid_'+i+'" onchange="handleVideo(event,'+i+')"><div class="quality"><button class="quality-btn '+wobble+'" onclick="setSpiral('+i+',\'Wobble\')">Wobble</button><button class="quality-btn '+tight+'" onclick="setSpiral('+i+',\'Tight\')">Tight</button><button class="quality-btn '+flat+'" onclick="setSpiral('+i+',\'Flat\')">Flat</button></div>'+timeField+'</div>';
+  }
+  const fb = document.getElementById('logFeedback');
+  if (state.currentStage > 0) {
+    const prev = state.stageReps[state.currentStage-1] || [];
+    const tight = prev.filter(r => r.spiral === 'Tight').length;
+    if (tight === prev.length && prev.length > 0) fb.innerHTML = '<div class="feedback">'+stages[state.currentStage-1].dist+' complete: all reps rated Tight. Clean stage.</div>';
+    else if (prev.length > 0) fb.innerHTML = '<div class="feedback negative">'+stages[state.currentStage-1].dist+' complete: '+(prev.length-tight)+' reps need work. Check the drill videos.</div>';
+    else fb.innerHTML = '';
+  } else fb.innerHTML = '';
+  const btn = document.getElementById('saveLogBtn');
+  if (state.currentStage >= 2) btn.textContent = 'Save & Finish Session';
+  else btn.textContent = 'Save & Continue to ' + stages[state.currentStage+1].dist;
+}
+
+function toggleCheck(el, type, idx) {
+  el.classList.toggle('done');
+  if (type === 'warmup') { state.warmupDone[idx] = el.classList.contains('done'); saveState(); }
+}
+
+function selectStage(n) { state.currentStage = n; saveState(); renderLog(); }
+function triggerVideo(idx) { document.getElementById('vid_'+idx).click(); }
+
+function handleVideo(e, idx) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    if (!state.stageReps[state.currentStage]) state.stageReps[state.currentStage] = [];
+    if (!state.stageReps[state.currentStage][idx]) state.stageReps[state.currentStage][idx] = {};
+    state.stageReps[state.currentStage][idx].video = ev.target.result;
+    saveState(); renderLog();
+  };
+  reader.readAsDataURL(file);
+}
+
+function setSpiral(repIdx, quality) {
+  if (!state.stageReps[state.currentStage]) state.stageReps[state.currentStage] = [];
+  if (!state.stageReps[state.currentStage][repIdx]) state.stageReps[state.currentStage][repIdx] = {};
+  state.stageReps[state.currentStage][repIdx].spiral = quality;
+  saveState(); renderLog();
+}
+
+function saveLogStage() {
+  const reps = state.stageReps[state.currentStage] || [];
+  const stage = stages[state.currentStage];
+  if (stage.time) {
+    for (let i = 0; i < stage.reps; i++) {
+      const t = document.getElementById('time_'+i);
+      if (t && !reps[i]) reps[i] = {};
+      if (t) reps[i].time = t.value;
+    }
+  }
+  state.stageReps[state.currentStage] = reps;
+  reps.forEach((r,i) => {
+    if (r.spiral || r.video) {
+      state.logs.push({date: new Date().toISOString(), stage: state.currentStage, dist: stage.dist, rep: i+1, spiral: r.spiral || 'Not rated', time: r.time || null, video: r.video || null});
+    }
+  });
+  if (state.currentStage < 2) {
+    state.currentStage++; saveState(); renderLog();
+  } else {
+    finishLog();
+  }
+}
+
+function finishLog() {
+  state.snapDayCount = Math.min(state.snapDayCount + 1, 3);
+  state.streak++;
+  state.warmupDone = [false,false,false,false,false];
+  state.currentStage = 0;
+  state.stageReps = {0:[], 1:[], 2:[]};
+  saveState();
+  alert('Session saved! Streak: ' + state.streak + ' days.');
+  goTo('home');
+}
+const weekDays = [
+  {day:'Sunday', type:'Rest', hasSnap:false, hasSprint:false},
+  {day:'Monday', type:'Squat A + Acceleration + Snap', hasSnap:true, hasSprint:true, sprint:'Accel', lifts:['Back Squat','Front Squat','Leg Press','Calf Raise']},
+  {day:'Tuesday', type:'Push · Chest / Triceps / Shoulders', hasSnap:false, hasSprint:false, lifts:['Bench Press','Incline DB Press','Overhead Press','Tricep Dip','Lateral Raise']},
+  {day:'Wednesday', type:'Squat B + Top Speed + Snap', hasSnap:true, hasSprint:true, sprint:'Speed', lifts:['Back Squat','Romanian Deadlift','Walking Lunge','Plank Hold']},
+  {day:'Thursday', type:'Pull · Back / Biceps / Forearms', hasSnap:false, hasSprint:false, lifts:['Deadlift','Pull-Up','Barbell Row','Face Pull','Hammer Curl']},
+  {day:'Friday', type:'Upper + Snap Day', hasSnap:true, hasSprint:false, lifts:['Bench Press','Row','Overhead Press','Pull-Up','Arm Circuit']},
+  {day:'Saturday', type:'Rest', hasSnap:false, hasSprint:false}
+];
+
+const warmupsByDay = {
+  'Squat A + Acceleration + Snap': ['Hip flexor stretch','Leg swings','Bodyweight squats','Empty bar ramp'],
+  'Squat B + Top Speed + Snap': ['Hip flexor stretch','Leg swings','Bodyweight squats','Empty bar ramp'],
+  'Push · Chest / Triceps / Shoulders': ['Band pull-aparts','Arm circles','Push-up ramp','Light DB press'],
+  'Pull · Back / Biceps / Forearms': ['Dead hang','Scap pull','Light row','Forearm stretch'],
+  'Upper + Snap Day': ['Band pull-aparts','Arm circles','Push-up ramp','Light DB press']
+};
+
+const drillData = [
+  {title:'Follow-Through Extension', duration:'2:30', category:'Technique'},
+  {title:'Hip Rotation Drill', duration:'1:45', category:'Power'},
+  {title:'Wrist Snap Drill', duration:'1:15', category:'Speed'},
+  {title:'Balance Hold', duration:'2:00', category:'Stability'}
+];
+
+function renderProgram() { showProgramList(); }
+
+function showProgramList() {
+  document.getElementById('programDays').style.display = 'block';
+  document.getElementById('programDetail').style.display = 'none';
+  const container = document.getElementById('programDays');
+  container.innerHTML = '';
+  const today = new Date().getDay();
+  weekDays.forEach((d, i) => {
+    const isToday = i === today ? 'active' : '';
+    const badge = i === today ? '<span class="day-badge">Today</span>' : (d.type === 'Rest' ? '<span class="day-badge rest">Rest</span>' : '');
+    container.innerHTML += '<div class="day-row '+isToday+'" onclick="showDayDetail('+i+')"><div><div class="day-name">'+d.day+'</div><div class="day-type">'+d.type+'</div></div>'+badge+'</div>';
+  });
+}
+
+function showDayDetail(idx) {
+  const day = weekDays[idx];
+  document.getElementById('programDays').style.display = 'none';
+  document.getElementById('programDetail').style.display = 'block';
+  document.getElementById('detailTitle').textContent = day.day + ' — ' + day.type;
+  const wu = document.getElementById('dayWarmup');
+  const wuList = warmupsByDay[day.type] || ['General warmup'];
+  wu.innerHTML = wuList.map(w => '<li><div class="check" onclick="this.classList.toggle(\'done\')"></div> '+w+'</li>').join('');
+  const lifts = document.getElementById('dayLifts');
+  if (day.lifts) {
+    lifts.innerHTML = day.lifts.map((l, i) => {
+      const key = day.day + '_' + l;
+      const last = state.liftLogs[key] || {weight: '', reps: ''};
+      const suggested = suggestWeight(l, last.weight, last.reps);
+      return '<div class="lift-row"><div><div class="lift-name">'+l+'</div><div class="lift-meta">'+suggested.target+' · Last: '+(last.weight||'—')+'×'+(last.reps||'—')+'</div></div><div class="lift-inputs"><input type="text" placeholder="wt" id="lift_'+idx+'_'+i+'_w" value="'+suggested.weight+'"><span>lbs</span><input type="text" placeholder="reps" id="lift_'+idx+'_'+i+'_r" value="'+suggested.reps+'"><span>reps</span><button class="log-btn" onclick="logLift(\''+day.day+'\',\''+l+'\','+idx+','+i+')">Log</button></div></div>';
+    }).join('');
+  } else {
+    lifts.innerHTML = '<div style="padding:20px;text-align:center;color:var(--dim);font-size:13px;">Rest day — no lifts scheduled.</div>';
+  }
+  const drillSec = document.getElementById('snapDrillsSection');
+  if (day.hasSnap) {
+    drillSec.style.display = 'block';
+    document.getElementById('drillList').innerHTML = drillData.map(d => '<div class="card drill-card" onclick="alert(\'Playing drill: '+d.title+'\')"><div class="drill-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div><div><div class="drill-title">'+d.title+'</div><div class="drill-meta">'+d.duration+' · '+d.category+'</div></div></div>').join('');
+  } else {
+    drillSec.style.display = 'none';
+  }
+}
+
+function suggestWeight(name, lastWeight, lastReps) {
+  if (!lastWeight) return {target:'4×5', weight:'', reps:''};
+  const w = parseInt(lastWeight); const r = parseInt(lastReps);
+  if (isNaN(w)) return {target:'4×5', weight:lastWeight, reps:lastReps};
+  const isCompound = ['Back Squat','Bench Press','Deadlift','Front Squat','Overhead Press'].includes(name);
+  const increment = isCompound ? 5 : 2.5;
+  if (r >= 5) return {target:'4×5', weight: w + increment, reps: 5};
+  return {target:'4×5', weight: w, reps: lastReps};
+}
+
+function logLift(day, lift, dayIdx, liftIdx) {
+  const w = document.getElementById('lift_'+dayIdx+'_'+liftIdx+'_w').value;
+  const r = document.getElementById('lift_'+dayIdx+'_'+liftIdx+'_r').value;
+  const key = day + '_' + lift;
+  state.liftLogs[key] = {weight: w, reps: r, date: new Date().toISOString()};
+  saveState();
+  alert(lift + ' logged: ' + w + ' lbs × ' + r + ' reps');
+}
+
+function renderProgress() {
+  document.getElementById('prSquat').textContent = '315';
+  document.getElementById('prSnap').textContent = '0.72s';
+  document.getElementById('prStreak').textContent = state.streak;
+  const squatData = [265, 275, 285, 295, 160];
+  const squatLabels = ['W1','W2','W3','W4','Del'];
+  const maxSquat = Math.max(...squatData);
+  document.getElementById('squatChart').innerHTML = squatData.map((v,i) => {
+    const h = (v / maxSquat) * 100; const op = i === 4 ? '0.35' : '0.8';
+    return '<div class="chart-bar" style="height:'+h+'%;opacity:'+op+'"><span class="val">'+v+'</span><span class="label">'+squatLabels[i]+'</span></div>';
+  }).join('');
+  const spiralData = [40, 55, 60, 75, 85, 90];
+  const spiralLabels = ['S1','S2','S3','S4','S5','S6'];
+  document.getElementById('spiralChart').innerHTML = spiralData.map((v,i) => {
+    const h = v;
+    return '<div class="chart-bar" style="height:'+h+'%"><span class="val">'+v+'%</span><span class="label">'+spiralLabels[i]+'</span></div>';
+  }).join('');
+  const sprintData = [2.45, 2.38, 2.31, 2.24];
+  const sprintLabels = ['W1','W2','W3','W4'];
+  const maxSprint = Math.max(...sprintData);
+  document.getElementById('sprintChart').innerHTML = sprintData.map((v,i) => {
+    const h = (v / maxSprint) * 100;
+    return '<div class="chart-bar" style="height:'+h+'%"><span class="val">'+v+'</span><span class="label">'+sprintLabels[i]+'</span></div>';
+  }).join('');
+}
+
+function renderChat() {
+  const ch = document.getElementById('chatHistory');
+  ch.innerHTML = state.chat.map(m => '<div class="chat-bubble '+m.sender+'">'+m.text+'</div>').join('');
+  ch.scrollTop = ch.scrollHeight;
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim(); if (!text) return;
+  state.chat.push({sender:'user', text: text});
+  input.value = '';
+  saveState(); renderChat();
+  setTimeout(() => {
+    const reply = generateCoachReply(text);
+    state.chat.push({sender:'ai', text: reply});
+    saveState(); renderChat();
+  }, 800);
+}
+
+function generateCoachReply(userText) {
+  const lower = userText.toLowerCase();
+  const firstName = state.profile.name.split(' ')[0];
+  if (lower.includes('weight') || lower.includes('squat') || lower.includes('lift')) {
+    const lastSquat = state.liftLogs['Wednesday_Back Squat'] || {weight:'285', reps:'5'};
+    return firstName + ', your Back Squat is at '+lastSquat.weight+' lbs for '+lastSquat.reps+' reps. If you hit all sets next session, we will bump to '+(parseInt(lastSquat.weight)+5)+' lbs. Trust the progression.';
+  }
+  if (lower.includes('spiral') || lower.includes('wobble') || lower.includes('tight')) {
+    const recent = state.logs.slice(-5);
+    const tight = recent.filter(l => l.spiral === 'Tight').length;
+    if (tight >= 3) return 'Your spiral consistency is trending up — '+tight+' of your last 5 reps at 14–15 YD were Tight. The follow-through work is paying off.';
+    return 'I see some inconsistency in your recent 14–15 YD reps. Let us revisit the Follow-Through Extension drill before your next session. Film one rep slow-motion so we can check hip rotation.';
+  }
+  if (lower.includes('drill') || lower.includes('fix') || lower.includes('help')) {
+    if (state.profile.flaws.length > 0) {
+      return 'Based on your profile flaws ('+state.profile.flaws.join(', ')+'), I recommend starting with the Hip Rotation Drill and Follow-Through Extension. Do 2 slow reps of each before every snap day.';
+    }
+    return 'Let us diagnose. Film a 14–15 YD rep and tell me what feels off — I will match it to a drill.';
+  }
+  if (lower.includes('recruit') || lower.includes('camp') || lower.includes('coach') || lower.includes('film')) {
+    return 'For recruiting, your film should lead with 3 consecutive tight spirals at 14–15 YD under 0.75s. Check the Learn section for "Making Film Clips That Get Watched." Coaches want to see consistency first, speed second.';
+  }
+  if (lower.includes('streak') || lower.includes('motivation')) {
+    return 'You are on a '+state.streak+'-day streak. That discipline compounds — not just physically, but mentally. Show up again tomorrow. The work is the reward.';
+  }
+  return 'Got it, '+firstName+'. I am tracking that. Keep logging your sessions and I will spot patterns across your block. Consistency over intensity — that is how you get recruited.';
+}
+</script>
+</body>
+</html>
