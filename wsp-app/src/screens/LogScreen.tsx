@@ -14,10 +14,7 @@ export default function LogScreen() {
   const [warmupDone, setWarmupDone] = useState<boolean[]>(warmups.map(() => false));
   const [currentStage, setCurrentStage] = useState(0);
   const [stageReps, setStageReps] = useState<Record<number, DraftRep[]>>({ 0: [], 1: [], 2: [] });
-  const [saving, setSaving] = useState(false);
   const [lastStageResult, setLastStageResult] = useState<{ dist: string; needWork: number; total: number } | null>(null);
-
-  if (!profile) return null;
 
   const stage = stages[currentStage];
   const reps = stageReps[currentStage] ?? [];
@@ -35,18 +32,16 @@ export default function LogScreen() {
     if (!res.canceled && res.assets[0]) updateRep(idx, { videoUri: res.assets[0].uri });
   }
 
-  async function saveStage() {
-    setSaving(true);
+  function saveStage() {
     const currentReps = stageReps[currentStage] ?? [];
-    await commitSnapStage(currentStage, currentReps);
+    commitSnapStage(currentStage, currentReps);
     const total = currentReps.filter((r) => r && (r.spiral || r.videoUri)).length;
     const tight = currentReps.filter((r) => r?.spiral === 'Tight').length;
     setLastStageResult({ dist: stage.dist, needWork: total - tight, total });
-    setSaving(false);
     if (currentStage < stages.length - 1) {
       setCurrentStage(currentStage + 1);
     } else {
-      await finishSession();
+      finishSession();
       setWarmupDone(warmups.map(() => false));
       setCurrentStage(0);
       setStageReps({ 0: [], 1: [], 2: [] });
@@ -58,7 +53,7 @@ export default function LogScreen() {
     <Screen>
       <View style={styles.header}>
         <View>
-          <Sub>Snap Day {profile.snap_day_count} of 3</Sub>
+          <Sub>Snap Day {profile.snapDayCount} of 3</Sub>
           <Heading size={22}>Log Session</Heading>
         </View>
         <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
@@ -99,40 +94,38 @@ export default function LogScreen() {
         })}
       </View>
 
-      {reps.length > 0 || true
-        ? Array.from({ length: stage.reps }).map((_, i) => {
-            const rep = reps[i] ?? {};
-            return (
-              <Card key={i}>
-                <Text style={styles.repHeader}>
-                  Rep {i + 1} · {stage.dist}
-                </Text>
-                <TouchableOpacity
-                  style={[styles.videoBox, rep.videoUri && { borderColor: accent, borderStyle: 'solid' }]}
-                  onPress={() => pickVideo(i)}
-                >
-                  <Text style={{ color: rep.videoUri ? accent : palette.dim, fontSize: 13 }}>
-                    {rep.videoUri ? '🎥 Video attached — tap to replace' : '🎥 Upload video'}
-                  </Text>
-                </TouchableOpacity>
-                <QualityPicker value={rep.spiral} onChange={(q) => updateRep(i, { spiral: q })} />
-                {stage.time && (
-                  <View style={{ marginTop: 10 }}>
-                    <Text style={styles.timeLabel}>Time (seconds)</Text>
-                    <TextInput
-                      style={styles.timeInput}
-                      value={rep.time ?? ''}
-                      onChangeText={(v) => updateRep(i, { time: v })}
-                      placeholder="0.75"
-                      placeholderTextColor={palette.dim}
-                      keyboardType="decimal-pad"
-                    />
-                  </View>
-                )}
-              </Card>
-            );
-          })
-        : null}
+      {Array.from({ length: stage.reps }).map((_, i) => {
+        const rep = reps[i] ?? {};
+        return (
+          <Card key={i}>
+            <Text style={styles.repHeader}>
+              Rep {i + 1} · {stage.dist}
+            </Text>
+            <TouchableOpacity
+              style={[styles.videoBox, rep.videoUri && { borderColor: accent, borderStyle: 'solid' }]}
+              onPress={() => pickVideo(i)}
+            >
+              <Text style={{ color: rep.videoUri ? accent : palette.dim, fontSize: 13 }}>
+                {rep.videoUri ? '🎥 Video attached — tap to replace' : '🎥 Upload video'}
+              </Text>
+            </TouchableOpacity>
+            <QualityPicker value={rep.spiral} onChange={(q) => updateRep(i, { spiral: q })} />
+            {stage.time && (
+              <View style={{ marginTop: 10 }}>
+                <Text style={styles.timeLabel}>Time (seconds)</Text>
+                <TextInput
+                  style={styles.timeInput}
+                  value={rep.time ?? ''}
+                  onChangeText={(v) => updateRep(i, { time: v })}
+                  placeholder="0.75"
+                  placeholderTextColor={palette.dim}
+                  keyboardType="decimal-pad"
+                />
+              </View>
+            )}
+          </Card>
+        );
+      })}
 
       {lastStageResult && (
         <Feedback
@@ -146,9 +139,8 @@ export default function LogScreen() {
       )}
 
       <Btn
-        title={saving ? 'Saving…' : currentStage >= stages.length - 1 ? 'Save & Finish Session' : `Save & Continue to ${stages[currentStage + 1].dist}`}
+        title={currentStage >= stages.length - 1 ? 'Save & Finish Session' : `Save & Continue to ${stages[currentStage + 1].dist}`}
         onPress={saveStage}
-        disabled={saving}
       />
     </Screen>
   );

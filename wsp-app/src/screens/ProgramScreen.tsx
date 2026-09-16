@@ -14,7 +14,6 @@ export default function ProgramScreen() {
   const [dayWarmupDone, setDayWarmupDone] = useState<boolean[]>([]);
   const [inputs, setInputs] = useState<Record<string, { weight: string; reps: string }>>({});
 
-  if (!profile) return null;
   const today = new Date().getDay();
 
   if (openDay === null) {
@@ -23,7 +22,7 @@ export default function ProgramScreen() {
         <View style={styles.header}>
           <Heading size={22}>Program</Heading>
           <Text style={styles.blockLabel}>
-            Block {profile.current_block} · Week {profile.current_week}
+            Block {profile.currentBlock} · Week {profile.currentWeek}
           </Text>
         </View>
         {weekDays.map((d, i) => (
@@ -109,8 +108,8 @@ export default function ProgramScreen() {
                   />
                   <TouchableOpacity
                     style={[styles.logBtn, { backgroundColor: accent }]}
-                    onPress={async () => {
-                      await logLift(day.day, lift, draft.weight, draft.reps);
+                    onPress={() => {
+                      logLift(day.day, lift, draft.weight, draft.reps);
                       Alert.alert('Logged', `${lift}: ${draft.weight} lbs × ${draft.reps} reps`);
                     }}
                   >

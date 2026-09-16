@@ -1,5 +1,9 @@
 import { Profile, SnapLog, Recovery } from '../types';
 
+function isToday(iso: string): boolean {
+  return new Date(iso).toDateString() === new Date().toDateString();
+}
+
 export function coachHomeNote(profile: Profile, recentLogs: SnapLog[], recovery: Recovery | null): string {
   const recent = recentLogs.slice(-3);
   const tightCount = recent.filter((l) => l.spiral === 'Tight').length;
@@ -10,9 +14,11 @@ export function coachHomeNote(profile: Profile, recentLogs: SnapLog[], recovery:
     note = "Your last few sessions show wobble at distance. Let's revisit the follow-through drill before your next snap day.";
   } else if (profile.flaws.includes('Spiral Wobble') && tightCount >= 2) {
     note = 'Spiral wobble is clearing up. The hip rotation work is showing in your 14–15 YD reps. Keep it consistent.';
+  } else if (recent.length === 0) {
+    note = 'Log your first snap session to start getting notes tailored to your reps.';
   }
 
-  if (recovery) {
+  if (recovery && isToday(recovery.loggedAt)) {
     if (recovery.soreness >= 8) {
       note = 'Your soreness is high today. Drop the accessory work, do the main lift only, and spend 10 extra minutes on hip mobility.';
     } else if (recovery.sleep <= 4) {
@@ -28,7 +34,7 @@ export function coachHomeNote(profile: Profile, recentLogs: SnapLog[], recovery:
 }
 
 export function recoveryStatusLabel(recovery: Recovery | null): string {
-  if (!recovery) return 'No check-in yet today — tap to log how you feel.';
+  if (!recovery || !isToday(recovery.loggedAt)) return 'No check-in yet today — tap to log how you feel.';
   const avg = Math.round((recovery.sleep + recovery.energy + recovery.mood + (10 - recovery.soreness)) / 4);
   let status = 'Ready to work';
   if (avg >= 8) status = 'Fully recovered — push day';

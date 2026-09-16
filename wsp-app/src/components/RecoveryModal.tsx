@@ -23,8 +23,8 @@ export function RecoveryModal({ visible, onClose }: { visible: boolean; onClose:
   });
   const [notes, setNotes] = useState(recovery?.notes ?? '');
 
-  async function submit() {
-    await saveRecovery({ ...values, notes });
+  function submit() {
+    saveRecovery({ ...values, notes });
     onClose();
   }
 

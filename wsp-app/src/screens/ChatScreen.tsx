@@ -12,11 +12,11 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const listRef = useRef<FlatList>(null);
 
-  async function send() {
+  function send() {
     const text = input.trim();
     if (!text) return;
     setInput('');
-    await sendChatMessage(text);
+    sendChatMessage(text);
     requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
   }
 

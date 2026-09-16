@@ -3,13 +3,10 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { palette } from '../theme';
-import { isSupabaseConfigured } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import { useAccent } from '../components/ui';
 
-import ConfigNeededScreen from '../screens/ConfigNeededScreen';
 import SplashScreen from '../screens/SplashScreen';
-import AuthScreen from '../screens/AuthScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LogScreen from '../screens/LogScreen';
@@ -59,13 +56,10 @@ const navTheme = {
 };
 
 export default function RootNavigator() {
-  const { session, authLoading, profile, dataLoading } = useApp();
+  const { loading, profile } = useApp();
 
-  if (!isSupabaseConfigured) return <ConfigNeededScreen />;
-  if (authLoading) return <SplashScreen />;
-  if (!session) return <AuthScreen />;
-  if (dataLoading || !profile) return <SplashScreen message="Setting up your profile" />;
-  if (!profile.name) return <OnboardingScreen />;
+  if (loading) return <SplashScreen />;
+  if (!profile.created) return <OnboardingScreen />;
 
   return (
     <NavigationContainer theme={navTheme}>

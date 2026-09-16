@@ -8,7 +8,6 @@ import { palette, fonts, spacing, radius } from '../theme';
 import { useApp } from '../context/AppContext';
 import { weekDays } from '../data/content';
 import { coachHomeNote, recoveryStatusLabel } from '../coach/homeNote';
-import { useSignedUrl } from '../lib/media';
 
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -17,9 +16,6 @@ export default function HomeScreen() {
   const accent = useAccent();
   const navigation = useNavigation<any>();
   const [recoveryOpen, setRecoveryOpen] = useState(false);
-  const photoUrl = useSignedUrl(profile?.photo_url);
-
-  if (!profile) return null;
 
   const today = new Date().getDay();
   const todayProgram = weekDays[today];
@@ -35,7 +31,7 @@ export default function HomeScreen() {
           <Heading size={22}>Welcome back, {firstName}</Heading>
         </View>
         <TouchableOpacity style={[styles.avatar, { backgroundColor: accent }]} onPress={() => navigation.navigate('Profile')}>
-          {photoUrl ? <Image source={{ uri: photoUrl }} style={styles.avatarImg} /> : <Text style={styles.avatarText}>{initials}</Text>}
+          {profile.photoUri ? <Image source={{ uri: profile.photoUri }} style={styles.avatarImg} /> : <Text style={styles.avatarText}>{initials}</Text>}
         </TouchableOpacity>
       </View>
 
@@ -48,7 +44,7 @@ export default function HomeScreen() {
         <CardTitle>Today's Session</CardTitle>
         <Text style={styles.sessionTitle}>{todayProgram.type}</Text>
         <Sub style={{ marginTop: 6 }}>
-          Week {profile.current_week}, Block {profile.current_block}
+          Week {profile.currentWeek}, Block {profile.currentBlock}
           {todayProgram.hasSnap ? ' · Snap day' : ''}
         </Sub>
         <Btn title="Start Today's Session" onPress={() => navigation.navigate('Log')} />
