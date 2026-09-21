@@ -7,39 +7,31 @@ import { palette, fonts, spacing, radius } from '../theme';
 import { useApp } from '../context/AppContext';
 
 export default function OnboardingScreen() {
-  const { profile, saveOnboardingProfile, uploadMedia, updateProfile } = useApp();
+  const { profile, saveOnboardingProfile } = useApp();
   const accent = useAccent();
-  const [name, setName] = useState(profile?.name ?? '');
-  const [height, setHeight] = useState(profile?.height ?? '');
-  const [weight, setWeight] = useState(profile?.weight ?? '');
-  const [strengths, setStrengths] = useState<string[]>(profile?.strengths ?? []);
-  const [flaws, setFlaws] = useState<string[]>(profile?.flaws ?? []);
+  const [name, setName] = useState(profile.name);
+  const [height, setHeight] = useState(profile.height);
+  const [weight, setWeight] = useState(profile.weight);
+  const [strengths, setStrengths] = useState<string[]>(profile.strengths.length ? profile.strengths : ['Ball Speed', 'Consistency']);
+  const [flaws, setFlaws] = useState<string[]>(profile.flaws.length ? profile.flaws : ['Spiral Wobble', 'Short Follow-Through']);
   const [strengthInput, setStrengthInput] = useState('');
   const [flawInput, setFlawInput] = useState('');
-  const [photoUri, setPhotoUri] = useState<string | null>(profile?.photo_url ?? null);
-  const [saving, setSaving] = useState(false);
+  const [photoUri, setPhotoUri] = useState<string | null>(profile.photoUri);
 
   async function pickPhoto() {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, allowsEditing: true, aspect: [1, 1] });
     if (!res.canceled && res.assets[0]) setPhotoUri(res.assets[0].uri);
   }
 
-  async function save() {
-    setSaving(true);
-    let photo_url = profile?.photo_url ?? null;
-    if (photoUri && photoUri !== profile?.photo_url) {
-      const path = await uploadMedia(photoUri, 'profile');
-      if (path) photo_url = path;
-    }
-    await saveOnboardingProfile({
+  function save() {
+    saveOnboardingProfile({
       name: name.trim() || 'Athlete',
       height,
       weight,
       strengths,
       flaws,
-      photo_url,
+      photoUri,
     });
-    setSaving(false);
   }
 
   return (
@@ -111,7 +103,7 @@ export default function OnboardingScreen() {
         />
       </View>
 
-      <Btn title={saving ? 'Saving…' : 'Create Profile'} onPress={save} disabled={saving} />
+      <Btn title="Create Profile" onPress={save} />
     </Screen>
   );
 }

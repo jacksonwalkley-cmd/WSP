@@ -8,18 +8,17 @@ import { useApp } from '../context/AppContext';
 
 export default function ProgressScreen() {
   const { profile, logs, liftLogs } = useApp();
-  if (!profile) return null;
 
   const squatEntries = liftLogs
-    .filter((l) => l.lift_name === 'Back Squat' && l.weight)
-    .sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime());
+    .filter((l) => l.liftName === 'Back Squat' && l.weight)
+    .sort((a, b) => new Date(a.loggedAt).getTime() - new Date(b.loggedAt).getTime());
   const squatPR = squatEntries.reduce((max, l) => Math.max(max, parseInt(l.weight ?? '0', 10) || 0), 0);
   const recentSquats = squatEntries.slice(-6);
 
   const snapReps = logs.filter((l) => l.stage === 2);
   const bestTime = snapReps.reduce<number | null>((min, l) => {
-    if (l.time_seconds == null) return min;
-    return min === null ? l.time_seconds : Math.min(min, l.time_seconds);
+    if (l.timeSeconds == null) return min;
+    return min === null ? l.timeSeconds : Math.min(min, l.timeSeconds);
   }, null);
   const recentReps = snapReps.slice(-6);
 

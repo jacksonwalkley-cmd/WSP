@@ -6,34 +6,24 @@ import { Card, CardTitle, Heading, Btn, Tag, SectionTitle, useAccent } from '../
 import { RecoveryModal } from '../components/RecoveryModal';
 import { palette, fonts, spacing, radius, themeOptions } from '../theme';
 import { useApp } from '../context/AppContext';
-import { useSignedUrl } from '../lib/media';
 
 export default function ProfileScreen() {
-  const { profile, updateProfile, addTag, removeTag, setThemeColor, uploadMedia, signOut, resetTrainingData, deleteAccount } = useApp();
+  const { profile, updateProfile, addTag, removeTag, setThemeColor, resetTrainingData, resetEverything } = useApp();
   const accent = useAccent();
-  const photoUrl = useSignedUrl(profile?.photo_url);
-  const [name, setName] = useState(profile?.name ?? '');
-  const [height, setHeight] = useState(profile?.height ?? '');
-  const [weight, setWeight] = useState(profile?.weight ?? '');
+  const [name, setName] = useState(profile.name);
+  const [height, setHeight] = useState(profile.height);
+  const [weight, setWeight] = useState(profile.weight);
   const [strengthInput, setStrengthInput] = useState('');
   const [flawInput, setFlawInput] = useState('');
   const [recoveryOpen, setRecoveryOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  if (!profile) return null;
 
   async function pickPhoto() {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, allowsEditing: true, aspect: [1, 1] });
-    if (!res.canceled && res.assets[0]) {
-      const path = await uploadMedia(res.assets[0].uri, 'profile');
-      if (path) await updateProfile({ photo_url: path });
-    }
+    if (!res.canceled && res.assets[0]) updateProfile({ photoUri: res.assets[0].uri });
   }
 
-  async function save() {
-    setSaving(true);
-    await updateProfile({ name: name.trim() || profile?.name, height, weight });
-    setSaving(false);
+  function save() {
+    updateProfile({ name: name.trim() || profile.name, height, weight });
     Alert.alert('Saved', 'Profile updated.');
   }
 
@@ -48,13 +38,13 @@ export default function ProfileScreen() {
     );
   }
 
-  function confirmDelete() {
+  function confirmStartOver() {
     Alert.alert(
-      'Delete account?',
-      'This clears your training data and signs you out. Contact support to fully remove your account.',
+      'Start over?',
+      'This clears everything, including your profile, and takes you back to onboarding.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteAccount() },
+        { text: 'Start Over', style: 'destructive', onPress: () => resetEverything() },
       ]
     );
   }
@@ -64,7 +54,13 @@ export default function ProfileScreen() {
       <Heading size={22} style={{ marginBottom: spacing.xl }}>Profile</Heading>
 
       <TouchableOpacity style={[styles.avatarLg, { borderColor: accent + '55' }]} onPress={pickPhoto}>
-        {photoUrl ? <Image source={{ uri: photoUrl }} style={styles.avatarImg} /> : <Text style={{ color: palette.dim, fontSize: 13 }}>{profile.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()}</Text>}
+        {profile.photoUri ? (
+          <Image source={{ uri: profile.photoUri }} style={styles.avatarImg} />
+        ) : (
+          <Text style={{ color: palette.dim, fontSize: 13 }}>
+            {profile.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()}
+          </Text>
+        )}
       </TouchableOpacity>
 
       <Text style={styles.label}>Name</Text>
@@ -79,7 +75,7 @@ export default function ProfileScreen() {
           <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholderTextColor={palette.dim} />
         </View>
       </View>
-      <Btn title={saving ? 'Saving…' : 'Save Changes'} onPress={save} disabled={saving} />
+      <Btn title="Save Changes" onPress={save} />
 
       <SectionTitle>Strengths</SectionTitle>
       <View style={styles.tagWrap}>
@@ -137,11 +133,10 @@ export default function ProfileScreen() {
         <Btn secondary title="Open Recovery Check-In" onPress={() => setRecoveryOpen(true)} />
       </Card>
 
-      <SectionTitle>Account</SectionTitle>
-      <Btn secondary title="Sign Out" onPress={signOut} />
+      <SectionTitle>Data</SectionTitle>
       <Btn secondary title="Reset Training Data" onPress={confirmReset} style={{ borderColor: palette.danger }} />
-      <TouchableOpacity onPress={confirmDelete} style={styles.deleteLink}>
-        <Text style={styles.deleteLinkText}>Delete Account</Text>
+      <TouchableOpacity onPress={confirmStartOver} style={styles.deleteLink}>
+        <Text style={styles.deleteLinkText}>Start Over (wipe everything)</Text>
       </TouchableOpacity>
 
       <RecoveryModal visible={recoveryOpen} onClose={() => setRecoveryOpen(false)} />

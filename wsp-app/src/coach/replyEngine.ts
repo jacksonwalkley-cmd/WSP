@@ -47,4 +47,4 @@ export function generateCoachReply(
 }
 
 export const initialCoachMessage =
-  'Hey! Log a few snap sessions and tell me what feels off in your reps — I\'ll match it to a drill and start spotting patterns across your block.';
+  "Hey! Log a few snap sessions and tell me what feels off in your reps — I'll match it to a drill and start spotting patterns across your block.";
