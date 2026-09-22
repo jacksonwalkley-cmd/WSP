@@ -288,6 +288,7 @@
     <div class="nav-links" id="appNav" hidden>
       <button class="nav-tab" id="tabProgram" type="button">Program</button>
       <button class="nav-tab" id="tabCompound" type="button">Compound Lifts</button>
+      <button class="nav-tab" id="tabVideos" type="button">Videos</button>
       <button class="nav-tab" id="tabProfile" type="button">Profile</button>
     </div>
   </nav>
@@ -483,6 +484,159 @@
   </div>
 </div>
 
+<!-- ========== VIDEOS VIEW ========== -->
+<div id="view-videos" hidden>
+<section id="wsp-videos" class="wspv">
+  <style>
+    .wspv{--bg:#0f1115;--card:#181b22;--line:#2a2f3a;--text:#f2f4f7;--muted:#9aa3b2;--accent:#f5b400;
+      background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+      padding:56px 16px;line-height:1.5}
+    .wspv *{box-sizing:border-box}
+    .wspv-wrap{max-width:1120px;margin:0 auto}
+    .wspv h2{font-size:clamp(28px,4vw,40px);margin:0 0 6px;letter-spacing:-.01em}
+    .wspv-sub{color:var(--muted);margin:0 0 28px;max-width:620px}
+    .wspv-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:24px}
+    .wspv-tab{background:transparent;color:var(--text);border:1px solid var(--line);border-radius:999px;
+      padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer}
+    .wspv-tab:hover{border-color:var(--muted)}
+    .wspv-tab[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#111}
+    .wspv-search{margin-left:auto;flex:1 1 220px;max-width:300px;background:var(--card);color:var(--text);
+      border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px}
+    .wspv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+    .wspv-card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+      cursor:pointer;text-align:left;color:inherit;padding:0;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;font:inherit;transition:transform .15s,border-color .15s}
+    .wspv-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+    .wspv-card[disabled]{cursor:default;opacity:.7}
+    .wspv-card[disabled]:hover{transform:none;border-color:var(--line)}
+    .wspv-thumb{position:relative;aspect-ratio:16/9;background:#232833 center/cover no-repeat;display:grid;place-items:center}
+    .wspv-play{width:54px;height:54px;border-radius:50%;background:rgba(0,0,0,.6);display:grid;place-items:center}
+    .wspv-play::after{content:"";border-left:16px solid #fff;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px}
+    .wspv-soon{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+    .wspv-body{padding:14px 16px 16px}
+    .wspv-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:4px}
+    .wspv-title{font-size:17px;font-weight:700;margin:0 0 4px}
+    .wspv-desc{font-size:14px;color:var(--muted);margin:0}
+    .wspv-empty{color:var(--muted);padding:40px 0;text-align:center;grid-column:1/-1}
+    .wspv-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
+    .wspv-modal.open{display:flex}
+    .wspv-player{width:100%;max-width:960px}
+    .wspv-frame{position:relative;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden}
+    .wspv-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+    .wspv-mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:10px;color:#fff}
+    .wspv-mhead h3{margin:0;font-size:20px}
+    .wspv-mhead p{margin:2px 0 0;color:#c9ced8;font-size:14px}
+    .wspv-close{background:#fff;color:#111;border:0;border-radius:999px;width:36px;height:36px;font-size:20px;cursor:pointer;flex:none}
+  </style>
+
+  <div class="wspv-wrap">
+    <h2>Video Library</h2>
+    <p class="wspv-sub">Step-by-step breakdowns of the drills, lifts, and exercises we use in WSP training. Free for everyone.</p>
+
+    <div class="wspv-bar" role="group" aria-label="Filter videos">
+      <button class="wspv-tab" data-cat="All" aria-pressed="true">All</button>
+      <button class="wspv-tab" data-cat="Drills" aria-pressed="false">Drills</button>
+      <button class="wspv-tab" data-cat="Lifts" aria-pressed="false">Lifts</button>
+      <button class="wspv-tab" data-cat="Exercises" aria-pressed="false">Exercises</button>
+      <input class="wspv-search" type="search" placeholder="Search videos…" aria-label="Search videos">
+    </div>
+
+    <div class="wspv-grid"></div>
+  </div>
+
+  <div class="wspv-modal" role="dialog" aria-modal="true" aria-label="Video player">
+    <div class="wspv-player">
+      <div class="wspv-mhead">
+        <div><h3></h3><p></p></div>
+        <button class="wspv-close" aria-label="Close video">×</button>
+      </div>
+      <div class="wspv-frame"></div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    /* ==========================================================
+       YOUR VIDEOS — add one line per video.
+       1. Upload the video to Google Drive
+       2. Right-click → Share → General access: "Anyone with the link" (Viewer)
+       3. Copy link and paste it into "link" below
+       Category must be: "Drills", "Lifts", or "Exercises"
+       Leave link as "" to show a "Coming soon" card.
+       ========================================================== */
+    var VIDEOS = [
+      { title: "Long Snap Grip & Stance",   category: "Drills",    link: "", description: "Hand placement, laces, and a stance you can repeat every rep." },
+      { title: "One-Hand Snap Drill",       category: "Drills",    link: "", description: "Builds wrist snap and spiral with the release hand only." },
+      { title: "Snap to Target Drill",      category: "Drills",    link: "", description: "Hitting the punter's hip every time, 15 yards back." },
+      { title: "Kicking Plant Foot Drill",  category: "Drills",    link: "", description: "Consistent plant position for clean contact on every kick." },
+      { title: "Punt Drop Drill",           category: "Drills",    link: "", description: "Same drop, same spot — the foundation of a good punt." },
+      { title: "Back Squat Technique",     category: "Lifts",     link: "", description: "Setup, depth, and bar path for the Day 1 heavy squat." },
+      { title: "Bench Press Technique",     category: "Lifts",     link: "", description: "Grip, arch, leg drive, and a safe touch point." },
+      { title: "Strict Pull-Up",            category: "Lifts",     link: "", description: "Full hang to chin over bar, no kipping." },
+      { title: "Med Ball Overhead Throw",   category: "Exercises", link: "", description: "Explosive hip-to-hands power that carries over to the snap." },
+      { title: "Box Jumps",                 category: "Exercises", link: "", description: "Fast-twitch jump work with a soft, controlled landing." }
+    ];
+    /* ============ no need to edit below this line ============ */
+
+    var root = document.getElementById("wsp-videos");
+    var grid = root.querySelector(".wspv-grid");
+    var tabs = root.querySelectorAll(".wspv-tab");
+    var search = root.querySelector(".wspv-search");
+    var modal = root.querySelector(".wspv-modal");
+    var frame = root.querySelector(".wspv-frame");
+    var current = "All";
+
+    function driveId(link) {
+      if (!link) return "";
+      var m = link.match(/\/d\/([\w-]{10,})/) || link.match(/[?&]id=([\w-]{10,})/);
+      return m ? m[1] : (/^[\w-]{20,}$/.test(link) ? link : "");
+    }
+    function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML.replace(/"/g, "&quot;"); }
+
+    function render() {
+      var q = search.value.trim().toLowerCase();
+      var list = VIDEOS.filter(function (v) {
+        return (current === "All" || v.category === current) &&
+          (!q || (v.title + " " + v.description + " " + v.category).toLowerCase().indexOf(q) > -1);
+      });
+      if (!list.length) { grid.innerHTML = '<p class="wspv-empty">No videos match that yet.</p>'; return; }
+      grid.innerHTML = list.map(function (v) {
+        var id = driveId(v.link);
+        var thumb = id ? ' style="background-image:url(https://drive.google.com/thumbnail?id=' + id + '&sz=w640)"' : "";
+        return '<button class="wspv-card"' + (id ? ' data-id="' + id + '"' : " disabled") +
+          ' data-title="' + esc(v.title) + '" data-desc="' + esc(v.description) + '">' +
+          '<div class="wspv-thumb"' + thumb + '>' + (id ? '<span class="wspv-play"></span>' : '<span class="wspv-soon">Coming soon</span>') + '</div>' +
+          '<div class="wspv-body"><span class="wspv-tag">' + esc(v.category) + '</span>' +
+          '<p class="wspv-title">' + esc(v.title) + '</p><p class="wspv-desc">' + esc(v.description) + '</p></div></button>';
+      }).join("");
+    }
+
+    function open(card) {
+      root.querySelector(".wspv-mhead h3").textContent = card.dataset.title;
+      root.querySelector(".wspv-mhead p").textContent = card.dataset.desc;
+      frame.innerHTML = '<iframe src="https://drive.google.com/file/d/' + card.dataset.id +
+        '/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+      modal.classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+    function close() { modal.classList.remove("open"); frame.innerHTML = ""; document.body.style.overflow = ""; }
+
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        current = t.dataset.cat;
+        tabs.forEach(function (x) { x.setAttribute("aria-pressed", x === t); });
+        render();
+      });
+    });
+    search.addEventListener("input", render);
+    grid.addEventListener("click", function (e) { var c = e.target.closest(".wspv-card"); if (c && c.dataset.id) open(c); });
+    modal.addEventListener("click", function (e) { if (e.target === modal || e.target.closest(".wspv-close")) close(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+    render();
+  })();
+  </script>
+</section>
+</div>
+
 <div class="wrap">
   <footer>
     <div class="foot-left">
@@ -509,13 +663,14 @@
   var profile = loadProfile();
 
   // ---------------- View switching ----------------
-  var views = ['start','program','compound','profile'];
+  var views = ['start','program','compound','videos','profile'];
   function showView(name){
     views.forEach(function(v){ document.getElementById('view-' + v).hidden = (v !== name); });
     document.getElementById('appNav').hidden = (name === 'start');
     if (name !== 'start'){
       document.getElementById('tabProgram').setAttribute('aria-current', name === 'program' ? 'true' : 'false');
       document.getElementById('tabCompound').setAttribute('aria-current', name === 'compound' ? 'true' : 'false');
+      document.getElementById('tabVideos').setAttribute('aria-current', name === 'videos' ? 'true' : 'false');
       document.getElementById('tabProfile').setAttribute('aria-current', name === 'profile' ? 'true' : 'false');
     }
     window.scrollTo(0,0);
@@ -526,6 +681,7 @@
   document.getElementById('brandBtn').addEventListener('click', function(){ showView('start'); });
   document.getElementById('tabProgram').addEventListener('click', function(){ showView('program'); });
   document.getElementById('tabCompound').addEventListener('click', function(){ showView('compound'); });
+  document.getElementById('tabVideos').addEventListener('click', function(){ showView('videos'); });
   document.getElementById('tabProfile').addEventListener('click', function(){ showView('profile'); });
   document.getElementById('goProfileFromCallout').addEventListener('click', function(){ showView('profile'); });
 
