@@ -93,17 +93,218 @@
 
   /* ---------- START VIEW (logo mark only) ---------- */
   .hero{
+    position:relative;
     min-height:calc(100vh - 160px);
     display:flex;align-items:center;justify-content:center;
+    margin-inline:clamp(-16px,-4vw,-48px);
+    overflow:hidden;
+    isolation:isolate;
   }
-  .hero-inner{display:flex;flex-direction:column;align-items:center;gap:22px;}
+
+  /* layered organic background for the opening screen — shuffles through three scenes, kept on-brand */
+  .hero-bg{ position:absolute; inset:0; z-index:0; overflow:hidden; background:#0d0d0b; }
+  .hero-scenes{ position:absolute; inset:0; }
+  .scene::before{
+    content:""; position:absolute; inset:0; z-index:0;
+    background: radial-gradient(ellipse 55% 50% at 50% 47%, var(--scene-core, transparent) 0%, transparent 72%);
+  }
+  .scene-forest{ --scene-core: rgba(78,108,66,0.55); }
+  .scene-mountain{ --scene-core: rgba(168,124,78,0.45); }
+  .scene-arctic{ --scene-core: rgba(90,130,145,0.42); }
+
+  /* three full scenes cross-fade through one shared 27s loop, each getting a third — negative
+     delays stagger identical timelines so only one scene is ever fully visible at a time */
+  .scene{ position:absolute; inset:0; overflow:hidden; opacity:0; animation: sceneCycle 27s ease-in-out infinite; }
+  .scene-forest{ animation-delay:0s; }
+  .scene-mountain{ animation-delay:-9s; }
+  .scene-arctic{ animation-delay:-18s; }
+  @keyframes sceneCycle{
+    0%{ opacity:1; }
+    30%{ opacity:1; }
+    36%{ opacity:0; }
+    100%{ opacity:0; }
+  }
+
+  /* shared building blocks — colors/shapes are set per scene below */
+  .fx-wash{ position:absolute; inset:-10%; filter:blur(55px); animation: washDrift 34s ease-in-out infinite alternate; }
+  @keyframes washDrift{ 0%{ transform:translate(0,0) scale(1); } 100%{ transform:translate(2.5%,-3%) scale(1.06); } }
+
+  .fx-horizon{ position:absolute; left:-10%; right:-10%; bottom:4%; height:16%; opacity:0.55; filter:blur(4px);
+    -webkit-mask-image: linear-gradient(to top, #000 55%, transparent 100%);
+    mask-image: linear-gradient(to top, #000 55%, transparent 100%);
+  }
+  .fx-horizon svg{ position:absolute; width:100%; height:100%; }
+
+  .fx-flank{ position:absolute; inset:0; filter:blur(2.5px); }
+  .fx-flank svg{ position:absolute; top:-6%; height:112%; width:auto; }
+  .fx-flank .f-left{ left:-6%; animation: flankSwayL 7.5s ease-in-out infinite; transform-origin:50% 100%;
+    -webkit-mask-image: linear-gradient(to right, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 62%, transparent 100%);
+  }
+  .fx-flank .f-right{ right:-6%; animation: flankSwayR 8.4s ease-in-out infinite; transform-origin:50% 100%;
+    -webkit-mask-image: linear-gradient(to left, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to left, #000 62%, transparent 100%);
+  }
+  @keyframes flankSwayL{ 0%,100%{ transform:rotate(-0.7deg); } 50%{ transform:rotate(0.9deg); } }
+  @keyframes flankSwayR{ 0%,100%{ transform:rotate(0.8deg); } 50%{ transform:rotate(-0.6deg); } }
+
+  .fx-canopy{
+    position:absolute; inset:0;
+    filter:blur(1.6px);
+    -webkit-mask-image: radial-gradient(ellipse 52% 46% at 50% 48%, transparent 40%, #000 82%);
+    mask-image: radial-gradient(ellipse 52% 46% at 50% 48%, transparent 40%, #000 82%);
+  }
+  .fx-canopy svg{ position:absolute; width:100%; height:100%; }
+  .fx-canopy .layer-far{ animation: swayFar 5.5s ease-in-out infinite; transform-origin:50% 0%; }
+  .fx-canopy .layer-near{ animation: swayNear 4.2s ease-in-out infinite; transform-origin:50% 0%; }
+  .fx-canopy .layer-bottom{ animation: swayBottom 6.2s ease-in-out infinite; transform-origin:50% 100%; }
+  @keyframes swayFar{ 0%,100%{ transform:rotate(-2deg) translateX(-4px); } 50%{ transform:rotate(2deg) translateX(4px); } }
+  @keyframes swayNear{ 0%,100%{ transform:rotate(2.6deg) translateX(5px); } 50%{ transform:rotate(-2.6deg) translateX(-5px); } }
+  @keyframes swayBottom{ 0%,100%{ transform:rotate(-1.6deg) translateX(-3px); } 50%{ transform:rotate(1.6deg) translateX(3px); } }
+
+  .fx-rays{
+    position:absolute; inset:-30% -10%; mix-blend-mode:screen;
+    background: repeating-linear-gradient(
+      100deg,
+      rgba(222,211,188,0.09) 0px, rgba(222,211,188,0.09) 2px,
+      transparent 2px, transparent 90px
+    );
+    -webkit-mask-image: radial-gradient(ellipse 55% 60% at 60% 15%, #000 0%, transparent 68%);
+    mask-image: radial-gradient(ellipse 55% 60% at 60% 15%, #000 0%, transparent 68%);
+    animation: raySweep 16s ease-in-out infinite alternate;
+  }
+  @keyframes raySweep{ 0%{ transform:translateX(-3%) rotate(0deg); opacity:0.55; } 100%{ transform:translateX(3%) rotate(1.2deg); opacity:0.9; } }
+
+  .fx-glow{
+    position:absolute; inset:-20%; mix-blend-mode:screen;
+    animation: dappleShift 8s ease-in-out infinite alternate;
+  }
+  @keyframes dappleShift{
+    0%{ transform:translate(-3%,0) rotate(0deg); opacity:0.7; }
+    50%{ transform:translate(2%,1.5%) rotate(1deg); opacity:1; }
+    100%{ transform:translate(3.5%,-1.5%) rotate(-0.8deg); opacity:0.8; }
+  }
+
+  .fx-mist{ position:absolute; left:-15%; right:-15%; bottom:-6%; height:42%; filter:blur(30px); animation: mistDrift 26s ease-in-out infinite alternate; }
+  @keyframes mistDrift{ 0%{ transform:translateX(0); } 100%{ transform:translateX(4%); } }
+
+  .fx-particles{ position:absolute; inset:0; overflow:hidden; }
+  .fx-particles .mote{ position:absolute; width:3px; height:3px; border-radius:50%; filter:blur(0.3px); animation-timing-function:ease-in-out; animation-iteration-count:infinite; }
+  .fx-particles .mote.rise{ bottom:-4%; animation-name: moteRise; }
+  .fx-particles .mote.fall{ top:-4%; animation-name: moteFall; }
+  @keyframes moteRise{
+    0%{ transform:translate(0,0); opacity:0; } 10%{ opacity:0.8; } 90%{ opacity:0.5; }
+    100%{ transform:translate(var(--drift,14px), -112vh); opacity:0; }
+  }
+  @keyframes moteFall{
+    0%{ transform:translate(0,0); opacity:0; } 10%{ opacity:0.9; } 90%{ opacity:0.6; }
+    100%{ transform:translate(var(--drift,14px), 112vh); opacity:0; }
+  }
+
+  /* ---- FOREST scene — deep tree-fern jungle, per reference photo ---- */
+  .scene-forest .fx-wash{
+    background:
+      radial-gradient(closest-side, rgba(96,140,78,0.52), transparent 70%) 16% 20% / 54% 54% no-repeat,
+      radial-gradient(closest-side, rgba(58,108,66,0.46), transparent 72%) 84% 16% / 50% 50% no-repeat,
+      radial-gradient(closest-side, rgba(130,150,60,0.26), transparent 70%) 68% 80% / 50% 50% no-repeat,
+      radial-gradient(closest-side, rgba(40,86,58,0.50), transparent 72%) 24% 84% / 48% 48% no-repeat;
+  }
+  .scene-forest .fx-horizon path{ fill:#0f150e; }
+  .scene-forest .fx-flank .flank{ fill:#0a0f09; }
+  .scene-forest .fx-canopy .leaf-far{ fill:#1a2417; opacity:0.95; }
+  .scene-forest .fx-canopy .leaf-near{ fill:#0d150c; opacity:1; }
+  .scene-forest .fx-glow{
+    background-image:
+      radial-gradient(ellipse 16% 34% at 30% 0%, rgba(210,225,180,0.18), transparent 70%),
+      radial-gradient(ellipse 12% 28% at 52% 0%, rgba(210,225,180,0.12), transparent 70%),
+      radial-gradient(ellipse 18% 38% at 74% 0%, rgba(210,225,180,0.16), transparent 70%);
+  }
+  /* soft warm sheen low in frame — a hint of still water without a literal pond */
+  .scene-forest .fx-mist{
+    background:
+      radial-gradient(ellipse 62% 90% at 50% 100%, rgba(150,175,130,0.22), transparent 74%),
+      linear-gradient(0deg, rgba(190,205,160,0.10) 0%, transparent 34%);
+  }
+  .scene-forest .fx-particles .mote{ background:rgba(215,225,180,0.55); }
+
+  /* ---- MOUNTAIN scene — golden-hour alpine ridgelines, per reference photo ---- */
+  .fx-ridge{ position:absolute; left:-10%; right:-10%; bottom:10%; height:30%; opacity:0.62; filter:blur(5.5px);
+    -webkit-mask-image: linear-gradient(to top, #000 50%, transparent 100%);
+    mask-image: linear-gradient(to top, #000 50%, transparent 100%);
+  }
+  .fx-ridge svg{ position:absolute; width:100%; height:100%; }
+  .scene-mountain .fx-wash{
+    background:
+      radial-gradient(closest-side, rgba(224,168,96,0.42), transparent 70%) 50% 10% / 62% 48% no-repeat,
+      radial-gradient(closest-side, rgba(196,140,150,0.22), transparent 72%) 22% 18% / 50% 46% no-repeat,
+      radial-gradient(closest-side, rgba(120,148,178,0.32), transparent 72%) 80% 22% / 52% 48% no-repeat,
+      radial-gradient(closest-side, rgba(96,74,48,0.38), transparent 72%) 50% 90% / 62% 42% no-repeat;
+  }
+  .scene-mountain .fx-horizon path{ fill:#9fb2c8; }
+  .scene-mountain .fx-horizon{ height:22%; opacity:0.5; filter:blur(5px); }
+  .scene-mountain .fx-ridge path{ fill:#39415c; }
+  .scene-mountain .fx-flank .flank{ fill:#2c3350; }
+  .scene-mountain .fx-canopy .leaf-near{ fill:#8a6a3a; opacity:1; }
+  .scene-mountain .fx-canopy .leaf-far{ fill:#54401f; opacity:1; }
+  .scene-mountain .fx-glow{
+    background-image:
+      radial-gradient(ellipse 32% 22% at 50% 3%, rgba(255,214,150,0.24), transparent 70%),
+      radial-gradient(ellipse 20% 16% at 36% 8%, rgba(255,190,140,0.14), transparent 70%);
+  }
+  .scene-mountain .fx-mist{ background: radial-gradient(ellipse 65% 100% at 50% 100%, rgba(196,172,138,0.20), transparent 75%); }
+  .scene-mountain .fx-particles .mote{ background:rgba(255,222,180,0.6); width:2px; height:2px; }
+
+  /* ---- ARCTIC scene ---- */
+  .scene-arctic .fx-wash{
+    background:
+      radial-gradient(closest-side, rgba(140,175,185,0.34), transparent 70%) 20% 18% / 54% 54% no-repeat,
+      radial-gradient(closest-side, rgba(110,150,170,0.30), transparent 72%) 80% 16% / 48% 48% no-repeat,
+      radial-gradient(closest-side, rgba(90,190,170,0.14), transparent 72%) 62% 72% / 52% 52% no-repeat,
+      radial-gradient(closest-side, rgba(80,110,130,0.34), transparent 72%) 24% 84% / 46% 46% no-repeat;
+  }
+  .scene-arctic .fx-horizon path{ fill:#141c22; }
+  .scene-arctic .fx-horizon{ height:20%; opacity:0.7; }
+  .scene-arctic .fx-flank .flank{ fill:#0d1418; }
+  .scene-arctic .fx-canopy .leaf-far{ fill:#1c2a30; opacity:0.9; }
+  .scene-arctic .fx-canopy .leaf-near{ fill:#0f1a1e; opacity:1; }
+  .scene-arctic .fx-aurora{
+    position:absolute; inset:-20% -10% auto -10%; height:70%; mix-blend-mode:screen; opacity:0.5;
+    background:
+      linear-gradient(100deg, transparent 10%, rgba(120,220,180,0.18) 30%, transparent 46%),
+      linear-gradient(96deg, transparent 40%, rgba(140,190,230,0.14) 58%, transparent 74%);
+    filter:blur(6px);
+    animation: auroraDrift 14s ease-in-out infinite alternate;
+  }
+  @keyframes auroraDrift{
+    0%{ transform:translateX(-4%) skewX(-2deg); opacity:0.4; }
+    100%{ transform:translateX(4%) skewX(2deg); opacity:0.65; }
+  }
+  .scene-arctic .fx-mist{ background: radial-gradient(ellipse 65% 100% at 50% 100%, rgba(190,205,210,0.22), transparent 75%); }
+  .scene-arctic .fx-particles .mote{ background:rgba(235,245,248,0.85); }
+
+  .hero-vignette{
+    position:absolute; inset:0; z-index:1;
+    background: radial-gradient(ellipse 70% 60% at 50% 46%, transparent 38%, var(--bg) 94%);
+  }
+  .hero-grain{
+    position:absolute; inset:-50%; z-index:1; opacity:.045; mix-blend-mode:overlay; pointer-events:none;
+    background-image: radial-gradient(rgba(241,237,228,0.9) 1px, transparent 1px);
+    background-size: 3px 3px;
+    animation: grainShift .4s steps(2) infinite;
+  }
+  @keyframes grainShift{ 0%{ transform:translate(0,0);} 100%{ transform:translate(-3px,3px);} }
+
+  .hero-inner{position:relative; z-index:2; display:flex;flex-direction:column;align-items:center;gap:22px;}
   .logo-circle{
     width:clamp(180px,26vw,250px);height:clamp(180px,26vw,250px);
     border-radius:50%;border:1.5px solid var(--accent);
-    background:transparent;color:var(--ink);cursor:pointer;
+    background:rgba(20,19,15,0.35);
+    backdrop-filter:blur(6px);
+    color:var(--ink);cursor:pointer;
     display:flex;align-items:center;justify-content:center;
     transition:background .2s ease, box-shadow .2s ease, transform .2s ease;
     padding:0;
+    box-shadow:0 0 0 1px rgba(241,237,228,0.04), 0 30px 60px -20px rgba(0,0,0,0.6);
   }
   .logo-circle:hover{background:var(--accent-dim);box-shadow:0 0 0 10px var(--accent-dim);transform:scale(1.02);}
   .logo-circle:focus-visible{outline:2px solid var(--accent);outline-offset:6px;}
@@ -140,6 +341,49 @@
 
   /* ---------- SPECIALTY PICKER ---------- */
   .specialty-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:8px;}
+
+  /* ---------- POSITION SLIDER (swipeable "pick your position" picker) ---------- */
+  .pos-slider{ position:relative; margin-top:8px; }
+  .pos-track{
+    display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch; border-radius:16px; scrollbar-width:none;
+  }
+  .pos-track::-webkit-scrollbar{ display:none; }
+  .pos-slide{
+    flex:0 0 100%; scroll-snap-align:start; display:flex; flex-direction:column;
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+  }
+  .pos-photo-wrap{ position:relative; width:100%; aspect-ratio:16/10; background:var(--bg-raised-2); }
+  .pos-photo{ width:100%; height:100%; object-fit:cover; display:block; }
+  .pos-photo-fallback{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; color:var(--ink-dim); text-align:center; padding:0 62px;
+  }
+  .pos-photo-fallback svg{ width:28px; height:28px; opacity:0.55; }
+  .pos-photo-fallback .pfb-name{ font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.04em; color:var(--ink-dim); }
+  .pos-photo-fallback .pfb-hint{ font-size:0.72rem; color:var(--ink-dim); opacity:0.75; line-height:1.4; max-width:34ch; }
+  .pos-info{ padding:22px clamp(18px,3vw,28px) 26px; display:flex; flex-direction:column; gap:12px; }
+  .pos-info h3{ font-size:1.4rem; font-weight:700; }
+  .pos-info p{ color:var(--ink-dim); font-size:0.92rem; line-height:1.55; }
+  .pos-select{ align-self:flex-start; }
+  .pos-arrow{
+    position:absolute; top:calc(35% - 8px); transform:translateY(-50%); width:38px; height:38px; border-radius:50%;
+    background:rgba(20,19,15,0.6); border:1px solid var(--line); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    backdrop-filter:blur(4px); z-index:3; transition:background .15s ease, border-color .15s ease;
+  }
+  .pos-arrow:hover{ background:var(--accent-dim); border-color:var(--accent); }
+  .pos-arrow:disabled{ opacity:0.35; cursor:default; }
+  .pos-arrow:disabled:hover{ background:rgba(20,19,15,0.6); border-color:var(--line); }
+  .pos-arrow.pos-prev{ left:10px; }
+  .pos-arrow.pos-next{ right:10px; }
+  .pos-arrow svg{ width:18px; height:18px; }
+  .pos-dots{ display:flex; justify-content:center; gap:8px; margin-top:14px; }
+  .pos-dot{
+    width:8px; height:8px; border-radius:50%; background:var(--line); border:none; padding:0;
+    cursor:pointer; transition:background .15s ease, transform .15s ease;
+  }
+  .pos-dot.active{ background:var(--accent); transform:scale(1.3); }
   .specialty-card{
     background:var(--bg-raised);border:1px solid var(--line);border-radius:14px;
     padding:26px 22px;text-align:left;cursor:pointer;color:var(--ink);
@@ -297,6 +541,156 @@
 <!-- ========== START VIEW ========== -->
 <div id="view-start">
   <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-scenes">
+
+        <!-- SCENE 1 — FOREST: canopy, tree trunks, warm dust motes -->
+        <div class="scene scene-forest" aria-hidden="true">
+          <div class="fx-wash"></div>
+          <div class="fx-horizon">
+            <svg viewBox="0 0 800 100" preserveAspectRatio="none">
+              <path d="M0,100 L0,72 L10,60 L16,68 L24,52 L30,66 L38,48 L46,64 L54,54 L60,70 L68,50 L76,66 L84,44 L92,64 L100,56 L108,70 L116,50 L124,66 L132,52 L140,68 L148,46 L156,64 L164,58 L172,72 L180,52 L188,66 L196,44 L204,62 L212,56 L220,70 L228,48 L236,64 L244,54 L252,68 L260,50 L268,66 L276,58 L284,72 L292,50 L300,64 L308,54 L316,68 L324,46 L332,62 L340,56 L348,70 L356,50 L364,66 L372,52 L380,68 L388,46 L396,64 L404,58 L412,70 L420,52 L428,66 L436,44 L444,62 L452,56 L460,70 L468,48 L476,64 L484,54 L492,68 L500,50 L508,66 L516,58 L524,72 L532,52 L540,66 L548,44 L556,62 L564,56 L572,70 L580,48 L588,64 L596,54 L604,68 L612,50 L620,66 L628,58 L636,72 L644,52 L652,66 L660,44 L668,62 L676,56 L684,70 L692,48 L700,64 L708,54 L716,68 L724,50 L732,66 L740,58 L748,72 L756,52 L764,66 L772,44 L780,62 L788,56 L796,70 L800,58 L800,100 Z"/>
+            </svg>
+          </div>
+          <div class="fx-flank">
+            <svg class="f-left" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
+              <path class="flank" d="M20,220 C17,170 15,130 22,95 C17,90 12,84 15,74 C19,80 22,84 24,90 C22,60 26,32 34,0 L40,0 C36,34 33,62 35,92 C38,85 42,80 47,75 C49,86 44,92 38,97 C40,132 39,172 36,220 Z"/>
+            </svg>
+            <svg class="f-right" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
+              <path class="flank" d="M40,220 C43,170 45,130 38,95 C43,90 48,84 45,74 C41,80 38,84 36,90 C38,60 34,32 26,0 L20,0 C24,34 27,62 25,92 C22,85 18,80 13,75 C11,86 16,92 22,97 C20,132 21,172 24,220 Z"/>
+            </svg>
+          </div>
+          <div class="fx-canopy">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+              <g class="layer-far">
+                <path class="leaf-far" d="M0,0 L0,34 C8,26 14,18 11,5 C20,15 19,26 15,35 C25,26 30,13 26,0 Z"/>
+                <path class="leaf-far" d="M100,0 L100,32 C91,23 86,15 90,3 C80,13 83,23 88,32 C77,23 73,12 78,0 Z"/>
+                <path class="leaf-far" d="M30,0 C34,10 32,18 26,24 C35,21 41,14 41,4 C45,12 43,19 37,25 C46,23 52,15 51,6 C55,12 53,18 48,22 L53,0 Z"/>
+                <path class="leaf-far" d="M70,0 C66,9 68,16 74,22 C65,19 60,13 60,4 C56,11 58,17 63,22 C55,20 50,13 51,5 C48,11 49,16 53,19 L48,0 Z"/>
+              </g>
+              <g class="layer-near">
+                <path class="leaf-near" d="M0,0 L0,22 C11,14 19,6 15,0 Z"/>
+                <path class="leaf-near" d="M100,0 L100,20 C88,12 81,5 85,0 Z"/>
+                <path class="leaf-near" d="M46,0 C50,8 48,13 43,17 C50,15 56,9 55,0 Z"/>
+                <path class="leaf-near" d="M18,0 C15,7 16,12 21,16 C15,14 10,9 11,0 Z"/>
+              </g>
+              <g class="layer-bottom">
+                <path class="leaf-near" d="M0,100 L0,72 C10,80 17,88 13,100 C22,90 21,79 17,71 C27,80 32,92 27,100 Z"/>
+                <path class="leaf-near" d="M100,100 L100,74 C90,82 84,89 88,100 C78,91 80,81 85,73 C75,82 71,92 76,100 Z"/>
+                <path class="leaf-far" d="M40,100 C43,92 41,86 35,81 C44,83 50,89 49,98 L54,100 Z"/>
+                <path class="leaf-far" d="M62,100 C59,93 61,87 67,82 C58,84 52,90 53,98 L48,100 Z"/>
+                <!-- extra fern-frond clusters for a denser, tree-fern-jungle foreground -->
+                <path class="leaf-far" d="M4,100 L6,86 L8,100 M10,100 L13,82 L16,100 M18,100 L21,88 L24,100"/>
+                <path class="leaf-far" d="M96,100 L94,86 L92,100 M90,100 L87,82 L84,100 M82,100 L79,88 L76,100"/>
+                <path class="leaf-near" d="M8,100 C10,90 14,86 20,84 C15,90 13,95 14,100 Z"/>
+                <path class="leaf-near" d="M92,100 C90,90 86,86 80,84 C85,90 87,95 86,100 Z"/>
+              </g>
+            </svg>
+          </div>
+          <div class="fx-rays"></div>
+          <div class="fx-particles">
+            <span class="mote rise" style="left:8%;--drift:10px;animation-duration:9s;animation-delay:0s;"></span>
+            <span class="mote rise" style="left:22%;--drift:-14px;animation-duration:12s;animation-delay:1.5s;"></span>
+            <span class="mote rise" style="left:38%;--drift:8px;animation-duration:10.5s;animation-delay:3s;"></span>
+            <span class="mote rise" style="left:55%;--drift:-10px;animation-duration:13s;animation-delay:0.8s;"></span>
+            <span class="mote rise" style="left:70%;--drift:12px;animation-duration:11s;animation-delay:4s;"></span>
+            <span class="mote rise" style="left:86%;--drift:-8px;animation-duration:9.5s;animation-delay:2.2s;"></span>
+          </div>
+          <div class="fx-glow"></div>
+          <div class="fx-mist"></div>
+        </div>
+
+        <!-- SCENE 2 — MOUNTAIN: golden-hour alpine ridgelines, per reference photo -->
+        <div class="scene scene-mountain" aria-hidden="true">
+          <div class="fx-wash"></div>
+          <div class="fx-horizon">
+            <svg viewBox="0 0 800 100" preserveAspectRatio="none">
+              <path d="M0,100 L0,55 L40,10 L70,42 L110,4 L150,38 L190,16 L230,46 L270,8 L310,40 L350,20 L390,50 L430,6 L470,44 L510,14 L550,48 L590,22 L630,52 L670,10 L710,42 L750,18 L800,46 L800,100 Z"/>
+            </svg>
+          </div>
+          <div class="fx-ridge">
+            <svg viewBox="0 0 800 100" preserveAspectRatio="none">
+              <path d="M0,100 L0,60 L90,15 L160,58 L230,8 L310,55 L390,18 L470,60 L550,12 L630,58 L710,20 L800,55 L800,100 Z"/>
+            </svg>
+          </div>
+          <div class="fx-flank">
+            <svg class="f-left" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
+              <path class="flank" d="M0,220 L0,60 L18,20 L26,60 L34,10 L44,80 L36,140 L40,220 Z"/>
+            </svg>
+            <svg class="f-right" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
+              <path class="flank" d="M60,220 L60,60 L42,20 L34,60 L26,10 L16,80 L24,140 L20,220 Z"/>
+            </svg>
+          </div>
+          <div class="fx-canopy">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+              <g class="layer-bottom">
+                <path class="leaf-near" d="M0,100 L0,84 C8,82 14,86 22,83 C30,80 34,86 40,84 L40,100 Z"/>
+                <path class="leaf-far" d="M4,83 L6,72 L8,83 Z"/>
+                <path class="leaf-far" d="M12,85 L14,73 L16,85 Z"/>
+                <path class="leaf-far" d="M20,82 L22,70 L24,82 Z"/>
+                <path class="leaf-far" d="M30,81 L32,71 L34,81 Z"/>
+                <path class="leaf-near" d="M100,100 L100,84 C92,82 86,86 78,83 C70,80 66,86 60,84 L60,100 Z"/>
+                <path class="leaf-far" d="M96,83 L94,72 L92,83 Z"/>
+                <path class="leaf-far" d="M88,85 L86,73 L84,85 Z"/>
+                <path class="leaf-far" d="M80,82 L78,70 L76,82 Z"/>
+                <path class="leaf-far" d="M70,81 L68,71 L66,81 Z"/>
+              </g>
+            </svg>
+          </div>
+          <div class="fx-rays"></div>
+          <div class="fx-particles">
+            <span class="mote rise" style="left:14%;--drift:8px;animation-duration:15s;animation-delay:0.5s;"></span>
+            <span class="mote rise" style="left:34%;--drift:-8px;animation-duration:17s;animation-delay:2.5s;"></span>
+            <span class="mote rise" style="left:58%;--drift:6px;animation-duration:14s;animation-delay:1.2s;"></span>
+            <span class="mote rise" style="left:80%;--drift:-6px;animation-duration:16s;animation-delay:3.5s;"></span>
+          </div>
+          <div class="fx-glow"></div>
+          <div class="fx-mist"></div>
+        </div>
+
+        <!-- SCENE 3 — ARCTIC: icy peaks, aurora bands, falling snow -->
+        <div class="scene scene-arctic" aria-hidden="true">
+          <div class="fx-wash"></div>
+          <div class="fx-horizon">
+            <svg viewBox="0 0 800 100" preserveAspectRatio="none">
+              <path d="M0,100 L0,60 L36,24 L64,50 L96,18 L128,48 L160,30 L192,54 L224,20 L256,46 L288,28 L320,52 L352,16 L384,48 L416,32 L448,54 L480,22 L512,46 L544,30 L576,52 L608,18 L640,48 L672,26 L704,50 L736,20 L800,48 L800,100 Z"/>
+            </svg>
+          </div>
+          <div class="fx-flank">
+            <svg class="f-left" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
+              <path class="flank" d="M0,220 L0,70 L16,30 L24,64 L32,14 L42,84 L34,144 L38,220 Z"/>
+            </svg>
+            <svg class="f-right" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
+              <path class="flank" d="M60,220 L60,70 L44,30 L36,64 L28,14 L18,84 L26,144 L22,220 Z"/>
+            </svg>
+          </div>
+          <div class="fx-aurora"></div>
+          <div class="fx-canopy">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+              <g class="layer-bottom">
+                <path class="leaf-near" d="M0,100 L0,84 L10,100 Z"/>
+                <path class="leaf-near" d="M100,100 L100,86 L90,100 Z"/>
+              </g>
+            </svg>
+          </div>
+          <div class="fx-particles">
+            <span class="mote fall" style="left:6%;--drift:-10px;animation-duration:8s;animation-delay:0s;"></span>
+            <span class="mote fall" style="left:16%;--drift:12px;animation-duration:10s;animation-delay:1s;"></span>
+            <span class="mote fall" style="left:28%;--drift:-8px;animation-duration:7s;animation-delay:2s;"></span>
+            <span class="mote fall" style="left:40%;--drift:10px;animation-duration:9.5s;animation-delay:0.6s;"></span>
+            <span class="mote fall" style="left:52%;--drift:-12px;animation-duration:8.5s;animation-delay:2.8s;"></span>
+            <span class="mote fall" style="left:64%;--drift:8px;animation-duration:11s;animation-delay:1.4s;"></span>
+            <span class="mote fall" style="left:76%;--drift:-10px;animation-duration:7.5s;animation-delay:3.4s;"></span>
+            <span class="mote fall" style="left:88%;--drift:12px;animation-duration:10.5s;animation-delay:0.2s;"></span>
+          </div>
+          <div class="fx-glow"></div>
+          <div class="fx-mist"></div>
+        </div>
+
+      </div>
+      <div class="hero-vignette"></div>
+      <div class="hero-grain"></div>
+    </div>
     <div class="hero-inner">
       <button class="logo-circle" id="enterProgramBtn" type="button" aria-label="Enter your program">
         <span class="logo-text">WSP<span>.</span></span>
@@ -323,19 +717,61 @@
         <h2>Pick your specialty.</h2>
         <p>The same 8-week strength and speed foundation runs under all three — mobility every day, lifts and sprint work on a weekly rotation. Only the skill days change.</p>
       </div>
-      <div class="specialty-grid">
-        <button class="specialty-card" data-specialty="snap" type="button">
-          <h3>Long Snapping</h3>
-          <p>Spiral, snap time, and follow-through at 10, 12, and 14–15 yards.</p>
+      <div class="pos-slider">
+        <div class="pos-track" id="posTrack" role="listbox" aria-label="Choose your position">
+          <div class="pos-slide" data-specialty="snap">
+            <div class="pos-photo-wrap">
+              <img class="pos-photo" src="photos/long-snapping.jpg" alt="Long Snapping" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="pos-photo-fallback" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
+                <span class="pfb-name">photos/long-snapping.jpg</span>
+                <span class="pfb-hint">Drop a photo in at this path to replace this placeholder</span>
+              </div>
+            </div>
+            <div class="pos-info">
+              <h3>Long Snapping</h3>
+              <p>Spiral, snap time, and follow-through at 10, 12, and 14–15 yards.</p>
+              <button class="btn btn-primary btn-sm pos-select" data-specialty="snap" type="button">Select This Position</button>
+            </div>
+          </div>
+          <div class="pos-slide" data-specialty="kick">
+            <div class="pos-photo-wrap">
+              <img class="pos-photo" src="photos/kicking.jpg" alt="Kicking" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="pos-photo-fallback" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
+                <span class="pfb-name">photos/kicking.jpg</span>
+                <span class="pfb-hint">Drop a photo in at this path to replace this placeholder</span>
+              </div>
+            </div>
+            <div class="pos-info">
+              <h3>Kicking</h3>
+              <p>Field goals and kickoffs. Drills coming soon.</p>
+              <button class="btn btn-primary btn-sm pos-select" data-specialty="kick" type="button">Select This Position</button>
+            </div>
+          </div>
+          <div class="pos-slide" data-specialty="punt">
+            <div class="pos-photo-wrap">
+              <img class="pos-photo" src="photos/punting.jpg" alt="Punting" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="pos-photo-fallback" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
+                <span class="pfb-name">photos/punting.jpg</span>
+                <span class="pfb-hint">Drop a photo in at this path to replace this placeholder</span>
+              </div>
+            </div>
+            <div class="pos-info">
+              <h3>Punting</h3>
+              <p>Hang time and directional punting. Drills coming soon.</p>
+              <button class="btn btn-primary btn-sm pos-select" data-specialty="punt" type="button">Select This Position</button>
+            </div>
+          </div>
+        </div>
+        <button class="pos-arrow pos-prev" id="posPrev" type="button" aria-label="Previous position">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <button class="specialty-card" data-specialty="kick" type="button">
-          <h3>Kicking</h3>
-          <p>Field goals and kickoffs. Drills coming soon.</p>
+        <button class="pos-arrow pos-next" id="posNext" type="button" aria-label="Next position">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
         </button>
-        <button class="specialty-card" data-specialty="punt" type="button">
-          <h3>Punting</h3>
-          <p>Hang time and directional punting. Drills coming soon.</p>
-        </button>
+        <div class="pos-dots" id="posDots"></div>
       </div>
     </section>
 
@@ -1022,10 +1458,10 @@
   renderMaxGrid();
   updateCallout();
 
-  // ---------------- Specialty picker / program detail toggle ----------------
+  // ---------------- Specialty picker (position slider) / program detail toggle ----------------
   var specialtyPickerEl = document.getElementById('specialtyPicker');
   var programDetailEl = document.getElementById('programDetail');
-  var specialtyCards = document.querySelectorAll('#specialtyPicker .specialty-card');
+  var posSelectButtons = document.querySelectorAll('#specialtyPicker .pos-select');
 
   function showProgramDetailView(){
     specialtyPickerEl.hidden = true;
@@ -1040,26 +1476,75 @@
   function showSpecialtyPickerView(){
     specialtyPickerEl.hidden = false;
     programDetailEl.hidden = true;
-    Array.prototype.forEach.call(specialtyCards, function(c){ c.classList.toggle('active', c.getAttribute('data-specialty') === currentSpecialty); });
+    if (currentSpecialty && window.posGoToSpecialty) window.posGoToSpecialty(currentSpecialty);
   }
   window.enterProgram = function(){
     if (currentSpecialty) showProgramDetailView(); else showSpecialtyPickerView();
   };
 
   // setSpecialty is the one place currentSpecialty changes — every entry point
-  // (the Program picker cards, and the Compound Lifts specialty row) calls this
+  // (the position slider, and the Compound Lifts specialty row) calls this
   // so the choice stays in sync everywhere on the site, not just where it was made.
   function setSpecialty(key){
     currentSpecialty = key;
     try { localStorage.setItem('wsp_specialty', key); } catch(e){}
   }
-  Array.prototype.forEach.call(specialtyCards, function(c){
-    c.addEventListener('click', function(){
-      setSpecialty(c.getAttribute('data-specialty'));
+  Array.prototype.forEach.call(posSelectButtons, function(btn){
+    btn.addEventListener('click', function(){
+      setSpecialty(btn.getAttribute('data-specialty'));
       showProgramDetailView();
     });
   });
   document.getElementById('changeSpecialtyBtn').addEventListener('click', showSpecialtyPickerView);
+
+  // ---------------- Position slider (swipeable "pick your position" picker) ----------------
+  (function(){
+    var track = document.getElementById('posTrack');
+    if (!track) return;
+    var slides = Array.prototype.slice.call(track.children);
+    var prevBtn = document.getElementById('posPrev');
+    var nextBtn = document.getElementById('posNext');
+    var dotsWrap = document.getElementById('posDots');
+
+    slides.forEach(function(_, i){
+      var dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'pos-dot';
+      dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+      dot.addEventListener('click', function(){ goTo(i); });
+      dotsWrap.appendChild(dot);
+    });
+    var dots = Array.prototype.slice.call(dotsWrap.children);
+
+    function currentIndex(){
+      return Math.round(track.scrollLeft / track.clientWidth) || 0;
+    }
+    function goTo(i){
+      i = Math.max(0, Math.min(slides.length - 1, i));
+      track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+    }
+    function updateUi(){
+      var i = currentIndex();
+      dots.forEach(function(d, idx){ d.classList.toggle('active', idx === i); });
+      prevBtn.disabled = (i === 0);
+      nextBtn.disabled = (i === slides.length - 1);
+    }
+    var scrollTimer;
+    track.addEventListener('scroll', function(){
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(updateUi, 60);
+    });
+    prevBtn.addEventListener('click', function(){ goTo(currentIndex() - 1); });
+    nextBtn.addEventListener('click', function(){ goTo(currentIndex() + 1); });
+    window.addEventListener('resize', function(){ goTo(currentIndex()); });
+
+    window.posGoToSpecialty = function(key){
+      var i = slides.findIndex(function(s){ return s.getAttribute('data-specialty') === key; });
+      if (i > -1) goTo(i);
+    };
+
+    updateUi();
+  })();
 
   // ---------------- Compound Lifts program (separate strength track) ----------------
   var TM_FACTOR = 0.9;
