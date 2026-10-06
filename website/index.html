@@ -20,6 +20,12 @@
     --accent:#b8afa0;
     --accent-ink:#1a1812;
     --accent-dim:rgba(184,175,160,0.14);
+    --glass-bg:rgba(255,255,255,0.055);
+    --glass-bg-hover:rgba(255,255,255,0.09);
+    --glass-border:rgba(255,255,255,0.14);
+    --glass-highlight:rgba(255,255,255,0.55);
+    --glass-shadow:rgba(0,0,0,0.45);
+    --glass-blur:22px;
   }
   *,*::before,*::after{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -30,6 +36,18 @@
     padding-inline:clamp(16px,4vw,48px);
     -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
+  }
+  /* ambient light field behind the app content — gives the liquid-glass
+     surfaces below something to actually refract/blur against */
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:-1;
+    background:
+      radial-gradient(ellipse 55% 38% at 12% 8%,  rgba(184,175,160,0.12), transparent 62%),
+      radial-gradient(ellipse 46% 34% at 88% 22%, rgba(120,152,182,0.09), transparent 60%),
+      radial-gradient(ellipse 50% 42% at 50% 96%, rgba(201,150,90,0.08), transparent 62%),
+      radial-gradient(ellipse 40% 30% at 30% 60%, rgba(180,120,140,0.05), transparent 60%);
+    pointer-events:none;
   }
   h1,h2,h3,h4{margin:0;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.01em;text-wrap:balance;}
   p{margin:0;}
@@ -42,27 +60,89 @@
   }
   .eyebrow::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;}
   .btn{
-    font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.03em;font-weight:700;
-    font-size:1rem;border-radius:9px;padding:14px 26px;border:1px solid transparent;cursor:pointer;
-    display:inline-flex;align-items:center;gap:8px;text-decoration:none;
-    transition:filter .18s ease, transform .18s ease, background .18s ease, border-color .18s ease;
+    font-family:'Barlow Condensed',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    font-weight:700;
+    font-size:1rem;
+    border-radius:9px;
+    padding:14px 26px;
+    border:1px solid transparent;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    position:relative;
+    overflow:hidden;
+    isolation:isolate;
+    transition:filter .18s ease, transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
   }
+  /* liquid-glass specular sheen — a soft diagonal highlight riding the top of the button */
+  .btn::before{
+    content:"";
+    position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.06) 28%, transparent 45%);
+    opacity:0.9;
+    transition:opacity .18s ease, transform .4s ease;
+  }
+  .btn:hover::before{ transform:translateX(6%); }
+  .btn > *{ position:relative; z-index:2; }
   .btn:hover{transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
   .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  .btn-primary{background:var(--accent);color:var(--accent-ink);}
-  .btn-primary:hover{filter:brightness(1.08);}
-  .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line);}
-  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-primary{
+    background:linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0)) , var(--accent);
+    color:var(--accent-ink);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.6),
+      inset 0 -8px 14px -8px rgba(0,0,0,0.18),
+      0 6px 18px -8px rgba(0,0,0,0.5);
+  }
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-ghost{
+    background:var(--glass-bg);
+    color:var(--ink);
+    border-color:var(--glass-border);
+    backdrop-filter:blur(var(--glass-blur)) saturate(160%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);
+    box-shadow:
+      inset 0 1px 0 var(--glass-highlight),
+      0 6px 16px -10px var(--glass-shadow);
+  }
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:var(--glass-bg-hover);}
   .btn-sm{padding:9px 16px;font-size:0.85rem;border-radius:7px;}
 
-  /* NAV */
-  .nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;display:flex;align-items:center;justify-content:space-between;padding-block:18px;background:var(--bg);}
-  .brand{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:0.08em;background:none;border:none;color:var(--ink);cursor:pointer;padding:0;}
+  /* ---------- NAV ---------- */
+  .nav{
+    position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+    display:flex;align-items:center;justify-content:space-between;
+    padding-block:14px;padding-inline:16px;
+    margin-inline:-16px;
+    border-radius:0 0 16px 16px;
+    background:linear-gradient(180deg, rgba(20,19,15,0.72), rgba(20,19,15,0.48));
+    backdrop-filter:blur(var(--glass-blur)) saturate(170%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(170%);
+    border:1px solid var(--glass-border);
+    border-top:none;
+    box-shadow:inset 0 1px 0 var(--glass-highlight), 0 12px 24px -18px rgba(0,0,0,0.6);
+  }
+  .brand{
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:0.08em;
+    background:none;border:none;color:var(--ink);cursor:pointer;padding:0;
+  }
   .brand span{color:var(--accent);}
   .nav-links{display:flex;align-items:center;gap:10px;}
-  .nav-tab{font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:500;background:none;border:1px solid transparent;color:var(--ink-dim);cursor:pointer;padding:8px 14px;border-radius:7px;transition:color .15s ease, background .15s ease;}
-  .nav-tab:hover{color:var(--ink);}
-  .nav-tab[aria-current="true"]{color:var(--ink);background:var(--bg-raised);}
+  .nav-tab{
+    font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:500;
+    background:none;border:1px solid transparent;color:var(--ink-dim);cursor:pointer;
+    padding:8px 14px;border-radius:7px;transition:color .15s ease, background .15s ease;
+  }
+  .nav-tab:hover{color:var(--ink);background:rgba(255,255,255,0.04);}
+  .nav-tab[aria-current="true"]{
+    color:var(--ink);background:var(--glass-bg-hover);
+    box-shadow:inset 0 1px 0 var(--glass-highlight);
+  }
   [hidden]{display:none!important;}
 
   /* ---------- START VIEW (logo mark only) ---------- */
@@ -70,7 +150,8 @@
     position:relative;
     min-height:calc(100vh - 160px);
     display:flex;align-items:center;justify-content:center;
-    margin-inline:clamp(-16px,-4vw,-48px);
+    margin-inline:calc(-1 * clamp(16px,4vw,48px));
+    cursor:pointer;
     overflow:hidden;
     isolation:isolate;
   }
@@ -82,9 +163,9 @@
     content:""; position:absolute; inset:0; z-index:0;
     background: radial-gradient(ellipse 55% 50% at 50% 47%, var(--scene-core, transparent) 0%, transparent 72%);
   }
-  .scene-forest{ --scene-core: rgba(78,108,66,0.55); }
-  .scene-mountain{ --scene-core: rgba(168,124,78,0.45); }
-  .scene-arctic{ --scene-core: rgba(90,130,145,0.42); }
+  .scene-forest{ --scene-core: rgba(8,10,6,0.4); }
+  .scene-mountain{ --scene-core: rgba(8,9,12,0.38); }
+  .scene-arctic{ --scene-core: rgba(10,8,4,0.36); }
 
   /* three full scenes cross-fade through one shared 27s loop, each getting a third — negative
      delays stagger identical timelines so only one scene is ever fully visible at a time */
@@ -93,10 +174,96 @@
   .scene-mountain{ animation-delay:-9s; }
   .scene-arctic{ animation-delay:-18s; }
   @keyframes sceneCycle{
-    0%{ opacity:1; }
-    30%{ opacity:1; }
-    36%{ opacity:0; }
+    0%{ opacity:0; }
+    7%{ opacity:1; }
+    27%{ opacity:1; }
+    34%{ opacity:0; }
     100%{ opacity:0; }
+  }
+
+  /* real photo scenes — slow Ken Burns drift so each photo breathes gently
+     instead of sitting static; overscanned 6% on every side so the pan/zoom
+     never reveals an edge */
+  .scene-photo{
+    position:absolute; inset:-6%;
+    background-size:cover; background-position:center;
+    will-change:transform;
+  }
+  .scene-forest .scene-photo{ animation: kenBurnsA 40s ease-in-out infinite alternate; }
+  .scene-mountain .scene-photo{ animation: kenBurnsB 46s ease-in-out infinite alternate; }
+  .scene-arctic .scene-photo{ animation: kenBurnsC 52s ease-in-out infinite alternate; }
+  @keyframes kenBurnsA{
+    0%{ transform:scale(1) translate(0,0); }
+    100%{ transform:scale(1.09) translate(-1.6%,-1.1%); }
+  }
+  @keyframes kenBurnsB{
+    0%{ transform:scale(1.04) translate(1%,0.4%); }
+    100%{ transform:scale(1.13) translate(-1.3%,-1.6%); }
+  }
+  @keyframes kenBurnsC{
+    0%{ transform:scale(1) translate(-1%,0.2%); }
+    100%{ transform:scale(1.08) translate(1.4%,-0.9%); }
+  }
+
+  /* background-image classes — defined once so the two photo layers per scene
+     (crisp base + rippled water overlay) share one copy of the image data */
+  .bg-forest{ background-image:url('photos/hero-forest.jpg'); }
+  .bg-mountain{ background-image:url('photos/hero-mountain.jpg'); }
+  .bg-autumn{ background-image:url('photos/hero-autumn.jpg'); }
+
+  /* water-ripple layer: a second copy of the same photo, masked to just the
+     water band at the bottom and run through an animated SVG displacement
+     filter (see #waterRipple defs near the hero markup) so the water pixels
+     actually warp and flow instead of sitting static. The crisp base photo
+     underneath keeps the rest of the frame (trees, mountains, sky) sharp. */
+  .water-fx{
+    -webkit-mask-image: linear-gradient(to top, #000 0%, #000 10%, transparent 18%);
+    mask-image: linear-gradient(to top, #000 0%, #000 10%, transparent 18%);
+    filter: url(#waterRipple);
+  }
+  /* same idea for the jungle canopy — a lighter, faster warp masked to just
+     the top band of leaves/branches so they flutter instead of sitting still */
+  .leaf-fx{
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 14%, transparent 24%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 14%, transparent 24%);
+    filter: url(#leafFlutter);
+  }
+  /* jungle vegetation along the left/right edges of the frame — same flutter
+     filter as the canopy band, masked to the two side columns only so the
+     ferns/foliage sway without ever touching the circle in the center */
+  .veg-side-fx{
+    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 16%, transparent 30%), linear-gradient(to left, #000 0%, #000 16%, transparent 30%);
+    mask-image: linear-gradient(to right, #000 0%, #000 16%, transparent 30%), linear-gradient(to left, #000 0%, #000 16%, transparent 30%);
+    filter: url(#leafFlutter);
+  }
+  /* mountain sky band — large slow warp so the photo's own clouds drift
+     instead of sitting frozen; masked to the sky above the peaks */
+  .sky-fx{
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 30%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 30%);
+    filter: url(#cloudDrift);
+  }
+
+  /* autumn scene — small leaf particles blowing across the frame. These are
+     real moving elements (not a photo warp) since the ask was leaves blowing
+     *around*, not just rustling in place. */
+  .leafblow-layer{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
+  .leafblow-layer .leaf{
+    position:absolute; top:-10%; width:9px; height:13px;
+    background:linear-gradient(135deg, var(--lc1,#e8a33d), var(--lc2,#b23a1f));
+    border-radius:0% 70% 0% 70%;
+    opacity:0;
+    box-shadow:0 0 2px rgba(0,0,0,0.25);
+    animation: leafBlow linear infinite;
+  }
+  @keyframes leafBlow{
+    0%{ transform:translate(0,0) rotate(0deg); opacity:0; }
+    6%{ opacity:0.85; }
+    25%{ transform:translate(7vw,26vh) rotate(95deg); }
+    50%{ transform:translate(-5vw,52vh) rotate(195deg); }
+    75%{ transform:translate(8vw,78vh) rotate(265deg); }
+    93%{ opacity:0.85; }
+    100%{ transform:translate(-3vw,114vh) rotate(360deg); opacity:0; }
   }
 
   /* shared building blocks — colors/shapes are set per scene below */
@@ -161,6 +328,26 @@
 
   .fx-mist{ position:absolute; left:-15%; right:-15%; bottom:-6%; height:42%; filter:blur(30px); animation: mistDrift 26s ease-in-out infinite alternate; }
   @keyframes mistDrift{ 0%{ transform:translateX(0); } 100%{ transform:translateX(4%); } }
+
+  /* soft moving highlight across water — a cheap, tasteful stand-in for real
+     surface shimmer since the photo itself is a still frame */
+  .fx-glint{
+    position:absolute; left:-25%; right:-25%; bottom:0; height:30%;
+    background: repeating-linear-gradient(
+      98deg,
+      rgba(255,255,255,0.16) 0px, rgba(255,255,255,0.16) 2px,
+      transparent 2px, transparent 64px
+    );
+    mix-blend-mode:screen; opacity:0.55;
+    -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 100%);
+    mask-image: linear-gradient(to top, #000 0%, transparent 100%);
+    animation: glintSweep 10s ease-in-out infinite alternate;
+  }
+  @keyframes glintSweep{
+    0%{ transform:translateX(-5%); opacity:0.4; }
+    50%{ transform:translateX(1%); opacity:0.6; }
+    100%{ transform:translateX(5%); opacity:0.45; }
+  }
 
   .fx-particles{ position:absolute; inset:0; overflow:hidden; }
   .fx-particles .mote{ position:absolute; width:3px; height:3px; border-radius:50%; filter:blur(0.3px); animation-timing-function:ease-in-out; animation-iteration-count:infinite; }
@@ -254,11 +441,16 @@
     100%{ transform:translateX(4%) skewX(2deg); opacity:0.65; }
   }
   .scene-arctic .fx-mist{ background: radial-gradient(ellipse 65% 100% at 50% 100%, rgba(190,205,210,0.22), transparent 75%); }
+  .scene-arctic .fx-glow{
+    background-image:
+      radial-gradient(ellipse 30% 24% at 12% 8%, rgba(255,224,170,0.26), transparent 70%),
+      radial-gradient(ellipse 22% 18% at 50% 2%, rgba(255,240,210,0.16), transparent 70%);
+  }
   .scene-arctic .fx-particles .mote{ background:rgba(235,245,248,0.85); }
 
   .hero-vignette{
     position:absolute; inset:0; z-index:1;
-    background: radial-gradient(ellipse 70% 60% at 50% 46%, transparent 38%, var(--bg) 94%);
+    background: linear-gradient(180deg, rgba(0,0,0,0.06) 0%, transparent 22%, transparent 78%, rgba(0,0,0,0.18) 100%);
   }
   .hero-grain{
     position:absolute; inset:-50%; z-index:1; opacity:.045; mix-blend-mode:overlay; pointer-events:none;
@@ -269,36 +461,46 @@
   @keyframes grainShift{ 0%{ transform:translate(0,0);} 100%{ transform:translate(-3px,3px);} }
 
   .hero-inner{position:relative; z-index:2; display:flex;flex-direction:column;align-items:center;gap:22px;}
+  /* the hero photos have "WSP. / TAP TO ENTER / @handle" baked into the image,
+     so the circle button is an invisible keyboard/screen-reader target. Where the
+     baked circle lands shifts with screen shape, so the whole hero takes the tap
+     (see JS); the Instagram link lives in the footer. */
   .logo-circle{
     width:clamp(180px,26vw,250px);height:clamp(180px,26vw,250px);
-    border-radius:50%;border:1.5px solid var(--accent);
-    background:rgba(20,19,15,0.35);
-    backdrop-filter:blur(6px);
+    border-radius:50%;border:none;
+    background:transparent;
     color:var(--ink);cursor:pointer;
     display:flex;align-items:center;justify-content:center;
-    transition:background .2s ease, box-shadow .2s ease, transform .2s ease;
+    transition:box-shadow .2s ease, transform .2s ease;
     padding:0;
-    box-shadow:0 0 0 1px rgba(241,237,228,0.04), 0 30px 60px -20px rgba(0,0,0,0.6);
+    box-shadow:none;
   }
-  .logo-circle:hover{background:var(--accent-dim);box-shadow:0 0 0 10px var(--accent-dim);transform:scale(1.02);}
-  .logo-circle:focus-visible{outline:2px solid var(--accent);outline-offset:6px;}
-  .logo-circle .logo-text{font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:0.06em;font-size:clamp(1.9rem,4vw,2.6rem);text-transform:uppercase;}
-  .logo-circle .logo-text span{color:var(--accent);}
-  .enter-caption{font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-dim);}
-  .insta-link{display:inline-flex;align-items:center;gap:8px;margin-top:10px;color:var(--ink-dim);text-decoration:none;font-size:0.85rem;transition:color .15s ease;}
+  .logo-circle:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,0.22);transform:scale(1.015);}
+  .logo-circle:focus-visible{outline:2px solid rgba(255,255,255,0.7);outline-offset:6px;}
+  .logo-circle .logo-text{ display:none; }
+  .enter-caption{ display:none; }
+  .insta-link{display:inline-flex;align-items:center;gap:8px;color:var(--ink-dim);text-decoration:none;font-size:0.85rem;transition:color .15s ease;}
   .insta-link:hover{color:var(--accent);}
   .insta-link svg{width:18px;height:18px;flex-shrink:0;}
+
+  @media (prefers-reduced-motion: reduce){
+    .scene, .scene-photo, .fx-wash, .fx-rays, .fx-glow, .fx-mist, .fx-glint, .hero-grain{ animation:none !important; }
+    .scene{ opacity:0; }
+    .scene-forest{ opacity:1; }
+    .water-fx, .leaf-fx, .veg-side-fx, .sky-fx{ filter:none; }
+    .leafblow-layer{ display:none; }
+  }
 
   /* SECTIONS */
   section{padding-block:clamp(32px,6vh,64px);}
   .section-head{max-width:64ch;margin-bottom:24px;}
   .section-head h2{font-size:clamp(1.8rem,3.6vw,2.4rem);font-weight:800;margin-block:14px 14px;}
   .section-head p{color:var(--ink-dim);font-size:1rem;line-height:1.6;}
-  .callout{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;background:var(--accent-dim);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:20px;}
+  .callout{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;background:linear-gradient(180deg, rgba(184,175,160,0.16), rgba(184,175,160,0.06));border:1px solid var(--glass-border);border-radius:12px;backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);box-shadow:inset 0 1px 0 var(--glass-highlight);padding:16px 20px;margin-bottom:20px;}
   .callout p{font-size:0.9rem;color:var(--ink);line-height:1.5;}
   .callout b{color:var(--accent);}
   .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:32px;}
-  .rule{background:var(--bg-raised);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:0.85rem;line-height:1.5;color:var(--ink-dim);}
+  .rule{background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);box-shadow:inset 0 1px 0 var(--glass-highlight);border-radius:12px;padding:14px 16px;font-size:0.85rem;line-height:1.5;color:var(--ink-dim);}
   .rule b{display:block;color:var(--ink);font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;}
 
   /* SPECIALTY PICKER */
@@ -313,10 +515,12 @@
   .pos-track::-webkit-scrollbar{ display:none; }
   .pos-slide{
     flex:0 0 100%; scroll-snap-align:start; display:flex; flex-direction:column;
-    background:var(--bg-raised); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+    background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:16px; overflow:hidden;
+    backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);
+    box-shadow:inset 0 1px 0 var(--glass-highlight), 0 16px 30px -20px var(--glass-shadow);
   }
-  .pos-photo-wrap{ position:relative; width:100%; aspect-ratio:16/10; background:var(--bg-raised-2); }
-  .pos-photo{ width:100%; height:100%; object-fit:cover; display:block; }
+  .pos-photo-wrap{ position:relative; width:100%; aspect-ratio:4/5; max-height:min(72vh,560px); overflow:hidden; background:#0e0e0e; }
+  .pos-photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
   .pos-photo-fallback{
     position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:8px; color:var(--ink-dim); text-align:center; padding:0 62px;
@@ -330,9 +534,11 @@
   .pos-select{ align-self:flex-start; }
   .pos-arrow{
     position:absolute; top:calc(35% - 8px); transform:translateY(-50%); width:38px; height:38px; border-radius:50%;
-    background:rgba(20,19,15,0.6); border:1px solid var(--line); color:var(--ink);
+    background:var(--glass-bg-hover); border:1px solid var(--glass-border); color:var(--ink);
     display:flex; align-items:center; justify-content:center; cursor:pointer;
-    backdrop-filter:blur(4px); z-index:3; transition:background .15s ease, border-color .15s ease;
+    backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);
+    box-shadow:inset 0 1px 0 var(--glass-highlight), 0 6px 14px -10px var(--glass-shadow);
+    z-index:3; transition:background .15s ease, border-color .15s ease;
   }
   .pos-arrow:hover{ background:var(--accent-dim); border-color:var(--accent); }
   .pos-arrow:disabled{ opacity:0.35; cursor:default; }
@@ -347,17 +553,19 @@
   }
   .pos-dot.active{ background:var(--accent); transform:scale(1.3); }
   .specialty-card{
-    background:var(--bg-raised);border:1px solid var(--line);border-radius:14px;
+    background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;
     padding:26px 22px;text-align:left;cursor:pointer;color:var(--ink);
-    transition:border-color .15s ease, background .15s ease, transform .15s ease;
+    backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);
+    box-shadow:inset 0 1px 0 var(--glass-highlight), 0 12px 24px -18px var(--glass-shadow);
+    transition:border-color .15s ease, background .15s ease, transform .15s ease, box-shadow .15s ease;
   }
-  .specialty-card:hover{border-color:var(--accent);background:var(--accent-dim);transform:translateY(-2px);}
+  .specialty-card:hover{border-color:var(--accent);background:var(--glass-bg-hover);transform:translateY(-2px);}
   .specialty-card.active{border-color:var(--accent);}
   .specialty-card h3{font-size:1.3rem;font-weight:700;margin-bottom:8px;}
   .specialty-card p{color:var(--ink-dim);font-size:0.88rem;line-height:1.5;}
 
   /* DAILY MOBILITY */
-  .mobility-card{background:var(--bg-raised);border:1px solid var(--line);border-radius:16px;padding:clamp(20px,3.5vw,32px);margin-bottom:36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px;}
+  .mobility-card{background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);box-shadow:inset 0 1px 0 var(--glass-highlight), 0 16px 30px -22px var(--glass-shadow);border-radius:16px;padding:clamp(20px,3.5vw,32px);margin-bottom:36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px;}
   .mobility-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:2px;}
   .mobility-head h3{font-size:1.2rem;font-weight:700;}
   .block-label{font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:12px;}
@@ -373,14 +581,14 @@
   .week-btn:not([aria-selected="true"]):hover{border-color:var(--accent);color:var(--ink);}
   .day-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:24px;scrollbar-width:none;}
   .day-row::-webkit-scrollbar{display:none;}
-  .day-btn{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;color:var(--ink-dim);background:var(--bg-raised);border:1px solid var(--line);border-radius:9px;padding:12px 16px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:border-color .15s ease, color .15s ease, background .15s ease;}
+  .day-btn{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:0.82rem;font-weight:700;letter-spacing:0.04em;color:var(--ink-dim);background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);box-shadow:inset 0 1px 0 var(--glass-highlight);border-radius:9px;padding:12px 16px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:border-color .15s ease, color .15s ease, background .15s ease;}
   .day-btn .dow{font-size:0.85rem;}
   .day-btn .tag{font-size:0.58rem;color:var(--ink-dim);letter-spacing:0.08em;}
   .day-btn[aria-selected="true"]{border-color:var(--accent);color:var(--ink);background:var(--accent-dim);}
   .day-btn[aria-selected="true"] .tag{color:var(--accent);}
   .day-btn:hover{border-color:var(--accent);}
 
-  .day-card{background:var(--bg-raised);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,4vw,36px);}
+  .day-card{background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);box-shadow:inset 0 1px 0 var(--glass-highlight), 0 18px 34px -24px var(--glass-shadow);border-radius:16px;padding:clamp(22px,4vw,36px);}
   .day-card-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px;}
   .day-card-head h3{font-size:clamp(1.4rem,3vw,1.9rem);font-weight:700;}
   .day-card-head .day-full{font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--ink-dim);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
@@ -396,7 +604,7 @@
   .rest-note{color:var(--ink-dim);font-size:0.95rem;line-height:1.6;}
 
   .stage-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;}
-  .stage-chip{background:var(--bg-raised-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:0.82rem;display:flex;flex-direction:column;gap:2px;min-width:78px;}
+  .stage-chip{background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);box-shadow:inset 0 1px 0 var(--glass-highlight);border-radius:8px;padding:8px 12px;font-size:0.82rem;display:flex;flex-direction:column;gap:2px;min-width:78px;}
   .stage-chip .d{font-family:'Space Mono',monospace;font-weight:700;color:var(--ink);}
   .stage-chip .r{font-size:0.72rem;color:var(--ink-dim);}
 
@@ -410,7 +618,7 @@
 
   /* MAX WEEK */
   .max-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;}
-  .max-tile{background:var(--bg-raised-2);border:1px solid var(--line);border-radius:14px;padding:24px;}
+  .max-tile{background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);box-shadow:inset 0 1px 0 var(--glass-highlight), 0 16px 28px -20px var(--glass-shadow);border-radius:14px;padding:24px;}
   .max-tile h4{font-size:1.15rem;font-weight:700;margin-bottom:10px;}
   .max-tile p{color:var(--ink-dim);font-size:0.88rem;line-height:1.55;margin-bottom:16px;}
   .max-tile .current{font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--accent);}
@@ -418,7 +626,7 @@
   /* PROFILE */
   .profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-bottom:28px;}
   .field label{display:block;font-size:0.75rem;color:var(--ink-dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-family:'Space Mono',monospace;}
-  .field input{width:100%;background:var(--bg-raised);border:1px solid var(--line);border-radius:9px;padding:12px 14px;color:var(--ink);font-size:0.98rem;font-family:'Inter',sans-serif;}
+  .field input{width:100%;background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(var(--glass-blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);box-shadow:inset 0 1px 0 var(--glass-highlight);border-radius:9px;padding:12px 14px;color:var(--ink);font-size:0.98rem;font-family:'Inter',sans-serif;}
   .field input:focus{outline:none;border-color:var(--accent);}
   .max-note-save{font-size:0.85rem;color:var(--accent);min-height:1.2em;}
 
@@ -426,6 +634,7 @@
   footer{border-top:1px solid var(--line);padding-block:44px calc(44px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:24px;}
   .foot-left .brand{margin-bottom:10px;cursor:default;}
   .foot-left p{color:var(--ink-dim);font-size:0.9rem;max-width:38ch;line-height:1.55;}
+  .foot-right{display:flex;flex-direction:column;align-items:flex-end;gap:12px;}
   .fine{font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--ink-dim);letter-spacing:0.04em;}
 </style>
 </head>
@@ -442,153 +651,84 @@
   </nav>
 </div>
 
+<!-- SVG displacement filter that gives the water band real pixel motion —
+     animated fractal-noise turbulence pushes the image's own pixels around
+     a little, which reads as gentle rippling/flowing water on a still photo -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <filter id="waterRipple" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" numOctaves="2" seed="7" result="noise" baseFrequency="0.012 0.045">
+        <animate attributeName="baseFrequency" dur="22s" repeatCount="indefinite"
+          values="0.012 0.045;0.016 0.038;0.010 0.050;0.012 0.045"></animate>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+    </filter>
+    <filter id="leafFlutter" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" numOctaves="2" seed="4" result="noise2" baseFrequency="0.028 0.06">
+        <animate attributeName="baseFrequency" dur="6s" repeatCount="indefinite"
+          values="0.028 0.06;0.034 0.05;0.024 0.07;0.028 0.06"></animate>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise2" scale="10" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+    </filter>
+    <!-- slow, large-scale warp for the mountain sky band — pushes the photo's own
+         cloud pixels sideways a little so they read as drifting rather than static -->
+    <filter id="cloudDrift" x="-30%" y="-30%" width="160%" height="160%">
+      <feTurbulence type="fractalNoise" numOctaves="2" seed="11" result="noise3" baseFrequency="0.006 0.012">
+        <animate attributeName="baseFrequency" dur="42s" repeatCount="indefinite"
+          values="0.006 0.012;0.009 0.009;0.004 0.016;0.006 0.012"></animate>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise3" scale="26" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+    </filter>
+  </defs>
+</svg>
+
 <!-- START VIEW -->
 <div id="view-start">
   <section class="hero">
     <div class="hero-bg">
       <div class="hero-scenes">
 
-        <!-- SCENE 1 — FOREST: canopy, tree trunks, warm dust motes -->
+        <!-- SCENE 1 — real photo: tree-fern jungle stream, golden light through canopy -->
         <div class="scene scene-forest" aria-hidden="true">
-          <div class="fx-wash"></div>
-          <div class="fx-horizon">
-            <svg viewBox="0 0 800 100" preserveAspectRatio="none">
-              <path d="M0,100 L0,72 L10,60 L16,68 L24,52 L30,66 L38,48 L46,64 L54,54 L60,70 L68,50 L76,66 L84,44 L92,64 L100,56 L108,70 L116,50 L124,66 L132,52 L140,68 L148,46 L156,64 L164,58 L172,72 L180,52 L188,66 L196,44 L204,62 L212,56 L220,70 L228,48 L236,64 L244,54 L252,68 L260,50 L268,66 L276,58 L284,72 L292,50 L300,64 L308,54 L316,68 L324,46 L332,62 L340,56 L348,70 L356,50 L364,66 L372,52 L380,68 L388,46 L396,64 L404,58 L412,70 L420,52 L428,66 L436,44 L444,62 L452,56 L460,70 L468,48 L476,64 L484,54 L492,68 L500,50 L508,66 L516,58 L524,72 L532,52 L540,66 L548,44 L556,62 L564,56 L572,70 L580,48 L588,64 L596,54 L604,68 L612,50 L620,66 L628,58 L636,72 L644,52 L652,66 L660,44 L668,62 L676,56 L684,70 L692,48 L700,64 L708,54 L716,68 L724,50 L732,66 L740,58 L748,72 L756,52 L764,66 L772,44 L780,62 L788,56 L796,70 L800,58 L800,100 Z"/>
-            </svg>
-          </div>
-          <div class="fx-flank">
-            <svg class="f-left" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
-              <path class="flank" d="M20,220 C17,170 15,130 22,95 C17,90 12,84 15,74 C19,80 22,84 24,90 C22,60 26,32 34,0 L40,0 C36,34 33,62 35,92 C38,85 42,80 47,75 C49,86 44,92 38,97 C40,132 39,172 36,220 Z"/>
-            </svg>
-            <svg class="f-right" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
-              <path class="flank" d="M40,220 C43,170 45,130 38,95 C43,90 48,84 45,74 C41,80 38,84 36,90 C38,60 34,32 26,0 L20,0 C24,34 27,62 25,92 C22,85 18,80 13,75 C11,86 16,92 22,97 C20,132 21,172 24,220 Z"/>
-            </svg>
-          </div>
-          <div class="fx-canopy">
-            <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-              <g class="layer-far">
-                <path class="leaf-far" d="M0,0 L0,34 C8,26 14,18 11,5 C20,15 19,26 15,35 C25,26 30,13 26,0 Z"/>
-                <path class="leaf-far" d="M100,0 L100,32 C91,23 86,15 90,3 C80,13 83,23 88,32 C77,23 73,12 78,0 Z"/>
-                <path class="leaf-far" d="M30,0 C34,10 32,18 26,24 C35,21 41,14 41,4 C45,12 43,19 37,25 C46,23 52,15 51,6 C55,12 53,18 48,22 L53,0 Z"/>
-                <path class="leaf-far" d="M70,0 C66,9 68,16 74,22 C65,19 60,13 60,4 C56,11 58,17 63,22 C55,20 50,13 51,5 C48,11 49,16 53,19 L48,0 Z"/>
-              </g>
-              <g class="layer-near">
-                <path class="leaf-near" d="M0,0 L0,22 C11,14 19,6 15,0 Z"/>
-                <path class="leaf-near" d="M100,0 L100,20 C88,12 81,5 85,0 Z"/>
-                <path class="leaf-near" d="M46,0 C50,8 48,13 43,17 C50,15 56,9 55,0 Z"/>
-                <path class="leaf-near" d="M18,0 C15,7 16,12 21,16 C15,14 10,9 11,0 Z"/>
-              </g>
-              <g class="layer-bottom">
-                <path class="leaf-near" d="M0,100 L0,72 C10,80 17,88 13,100 C22,90 21,79 17,71 C27,80 32,92 27,100 Z"/>
-                <path class="leaf-near" d="M100,100 L100,74 C90,82 84,89 88,100 C78,91 80,81 85,73 C75,82 71,92 76,100 Z"/>
-                <path class="leaf-far" d="M40,100 C43,92 41,86 35,81 C44,83 50,89 49,98 L54,100 Z"/>
-                <path class="leaf-far" d="M62,100 C59,93 61,87 67,82 C58,84 52,90 53,98 L48,100 Z"/>
-                <!-- extra fern-frond clusters for a denser, tree-fern-jungle foreground -->
-                <path class="leaf-far" d="M4,100 L6,86 L8,100 M10,100 L13,82 L16,100 M18,100 L21,88 L24,100"/>
-                <path class="leaf-far" d="M96,100 L94,86 L92,100 M90,100 L87,82 L84,100 M82,100 L79,88 L76,100"/>
-                <path class="leaf-near" d="M8,100 C10,90 14,86 20,84 C15,90 13,95 14,100 Z"/>
-                <path class="leaf-near" d="M92,100 C90,90 86,86 80,84 C85,90 87,95 86,100 Z"/>
-              </g>
-            </svg>
-          </div>
+          <div class="scene-photo bg-forest"></div>
+          <div class="scene-photo bg-forest water-fx"></div>
+          <div class="scene-photo bg-forest leaf-fx"></div>
+          <div class="scene-photo bg-forest veg-side-fx"></div>
           <div class="fx-rays"></div>
-          <div class="fx-particles">
-            <span class="mote rise" style="left:8%;--drift:10px;animation-duration:9s;animation-delay:0s;"></span>
-            <span class="mote rise" style="left:22%;--drift:-14px;animation-duration:12s;animation-delay:1.5s;"></span>
-            <span class="mote rise" style="left:38%;--drift:8px;animation-duration:10.5s;animation-delay:3s;"></span>
-            <span class="mote rise" style="left:55%;--drift:-10px;animation-duration:13s;animation-delay:0.8s;"></span>
-            <span class="mote rise" style="left:70%;--drift:12px;animation-duration:11s;animation-delay:4s;"></span>
-            <span class="mote rise" style="left:86%;--drift:-8px;animation-duration:9.5s;animation-delay:2.2s;"></span>
-          </div>
           <div class="fx-glow"></div>
           <div class="fx-mist"></div>
+          <div class="fx-glint"></div>
         </div>
 
-        <!-- SCENE 2 — MOUNTAIN: golden-hour alpine ridgelines, per reference photo -->
+        <!-- SCENE 2 — real photo: alpine glacier peak and mountain stream -->
         <div class="scene scene-mountain" aria-hidden="true">
-          <div class="fx-wash"></div>
-          <div class="fx-horizon">
-            <svg viewBox="0 0 800 100" preserveAspectRatio="none">
-              <path d="M0,100 L0,55 L40,10 L70,42 L110,4 L150,38 L190,16 L230,46 L270,8 L310,40 L350,20 L390,50 L430,6 L470,44 L510,14 L550,48 L590,22 L630,52 L670,10 L710,42 L750,18 L800,46 L800,100 Z"/>
-            </svg>
-          </div>
-          <div class="fx-ridge">
-            <svg viewBox="0 0 800 100" preserveAspectRatio="none">
-              <path d="M0,100 L0,60 L90,15 L160,58 L230,8 L310,55 L390,18 L470,60 L550,12 L630,58 L710,20 L800,55 L800,100 Z"/>
-            </svg>
-          </div>
-          <div class="fx-flank">
-            <svg class="f-left" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
-              <path class="flank" d="M0,220 L0,60 L18,20 L26,60 L34,10 L44,80 L36,140 L40,220 Z"/>
-            </svg>
-            <svg class="f-right" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
-              <path class="flank" d="M60,220 L60,60 L42,20 L34,60 L26,10 L16,80 L24,140 L20,220 Z"/>
-            </svg>
-          </div>
-          <div class="fx-canopy">
-            <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-              <g class="layer-bottom">
-                <path class="leaf-near" d="M0,100 L0,84 C8,82 14,86 22,83 C30,80 34,86 40,84 L40,100 Z"/>
-                <path class="leaf-far" d="M4,83 L6,72 L8,83 Z"/>
-                <path class="leaf-far" d="M12,85 L14,73 L16,85 Z"/>
-                <path class="leaf-far" d="M20,82 L22,70 L24,82 Z"/>
-                <path class="leaf-far" d="M30,81 L32,71 L34,81 Z"/>
-                <path class="leaf-near" d="M100,100 L100,84 C92,82 86,86 78,83 C70,80 66,86 60,84 L60,100 Z"/>
-                <path class="leaf-far" d="M96,83 L94,72 L92,83 Z"/>
-                <path class="leaf-far" d="M88,85 L86,73 L84,85 Z"/>
-                <path class="leaf-far" d="M80,82 L78,70 L76,82 Z"/>
-                <path class="leaf-far" d="M70,81 L68,71 L66,81 Z"/>
-              </g>
-            </svg>
-          </div>
-          <div class="fx-rays"></div>
-          <div class="fx-particles">
-            <span class="mote rise" style="left:14%;--drift:8px;animation-duration:15s;animation-delay:0.5s;"></span>
-            <span class="mote rise" style="left:34%;--drift:-8px;animation-duration:17s;animation-delay:2.5s;"></span>
-            <span class="mote rise" style="left:58%;--drift:6px;animation-duration:14s;animation-delay:1.2s;"></span>
-            <span class="mote rise" style="left:80%;--drift:-6px;animation-duration:16s;animation-delay:3.5s;"></span>
-          </div>
+          <div class="scene-photo bg-mountain"></div>
+          <div class="scene-photo bg-mountain water-fx"></div>
+          <div class="scene-photo bg-mountain sky-fx"></div>
           <div class="fx-glow"></div>
           <div class="fx-mist"></div>
+          <div class="fx-glint"></div>
         </div>
 
-        <!-- SCENE 3 — ARCTIC: icy peaks, aurora bands, falling snow -->
+        <!-- SCENE 3 — real photo: autumn lakeside town -->
         <div class="scene scene-arctic" aria-hidden="true">
-          <div class="fx-wash"></div>
-          <div class="fx-horizon">
-            <svg viewBox="0 0 800 100" preserveAspectRatio="none">
-              <path d="M0,100 L0,60 L36,24 L64,50 L96,18 L128,48 L160,30 L192,54 L224,20 L256,46 L288,28 L320,52 L352,16 L384,48 L416,32 L448,54 L480,22 L512,46 L544,30 L576,52 L608,18 L640,48 L672,26 L704,50 L736,20 L800,48 L800,100 Z"/>
-            </svg>
-          </div>
-          <div class="fx-flank">
-            <svg class="f-left" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
-              <path class="flank" d="M0,220 L0,70 L16,30 L24,64 L32,14 L42,84 L34,144 L38,220 Z"/>
-            </svg>
-            <svg class="f-right" viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet">
-              <path class="flank" d="M60,220 L60,70 L44,30 L36,64 L28,14 L18,84 L26,144 L22,220 Z"/>
-            </svg>
-          </div>
-          <div class="fx-aurora"></div>
-          <div class="fx-canopy">
-            <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-              <g class="layer-bottom">
-                <path class="leaf-near" d="M0,100 L0,84 L10,100 Z"/>
-                <path class="leaf-near" d="M100,100 L100,86 L90,100 Z"/>
-              </g>
-            </svg>
-          </div>
-          <div class="fx-particles">
-            <span class="mote fall" style="left:6%;--drift:-10px;animation-duration:8s;animation-delay:0s;"></span>
-            <span class="mote fall" style="left:16%;--drift:12px;animation-duration:10s;animation-delay:1s;"></span>
-            <span class="mote fall" style="left:28%;--drift:-8px;animation-duration:7s;animation-delay:2s;"></span>
-            <span class="mote fall" style="left:40%;--drift:10px;animation-duration:9.5s;animation-delay:0.6s;"></span>
-            <span class="mote fall" style="left:52%;--drift:-12px;animation-duration:8.5s;animation-delay:2.8s;"></span>
-            <span class="mote fall" style="left:64%;--drift:8px;animation-duration:11s;animation-delay:1.4s;"></span>
-            <span class="mote fall" style="left:76%;--drift:-10px;animation-duration:7.5s;animation-delay:3.4s;"></span>
-            <span class="mote fall" style="left:88%;--drift:12px;animation-duration:10.5s;animation-delay:0.2s;"></span>
-          </div>
+          <div class="scene-photo bg-autumn"></div>
+          <div class="scene-photo bg-autumn water-fx"></div>
           <div class="fx-glow"></div>
           <div class="fx-mist"></div>
+          <div class="fx-glint"></div>
+          <div class="leafblow-layer">
+            <div class="leaf" style="left:4%; width:8px; height:12px; animation-duration:10s; animation-delay:0s; --lc1:#e8a33d; --lc2:#b23a1f;"></div>
+            <div class="leaf" style="left:14%; width:10px; height:14px; animation-duration:13s; animation-delay:2.4s; --lc1:#d9823a; --lc2:#7a2e14;"></div>
+            <div class="leaf" style="left:24%; width:7px; height:11px; animation-duration:9s; animation-delay:5s; --lc1:#f0b94a; --lc2:#a4451f;"></div>
+            <div class="leaf" style="left:36%; width:9px; height:13px; animation-duration:12s; animation-delay:1.2s; --lc1:#c9712f; --lc2:#5e2410;"></div>
+            <div class="leaf" style="left:48%; width:8px; height:12px; animation-duration:11s; animation-delay:7.5s; --lc1:#e8a33d; --lc2:#8c3418;"></div>
+            <div class="leaf" style="left:58%; width:10px; height:14px; animation-duration:14s; animation-delay:3.8s; --lc1:#f0b94a; --lc2:#b23a1f;"></div>
+            <div class="leaf" style="left:68%; width:7px; height:11px; animation-duration:10.5s; animation-delay:6.2s; --lc1:#d9823a; --lc2:#7a2e14;"></div>
+            <div class="leaf" style="left:77%; width:9px; height:13px; animation-duration:12.5s; animation-delay:0.6s; --lc1:#c9712f; --lc2:#a4451f;"></div>
+            <div class="leaf" style="left:87%; width:8px; height:12px; animation-duration:9.5s; animation-delay:4.4s; --lc1:#e8a33d; --lc2:#5e2410;"></div>
+            <div class="leaf" style="left:95%; width:7px; height:11px; animation-duration:11.5s; animation-delay:8.6s; --lc1:#f0b94a; --lc2:#8c3418;"></div>
+          </div>
         </div>
 
       </div>
@@ -600,14 +740,6 @@
         <span class="logo-text">WSP<span>.</span></span>
       </button>
       <span class="enter-caption">Tap to enter</span>
-      <a class="insta-link" href="https://www.instagram.com/walkleyspecialistperformance" target="_blank" rel="noopener noreferrer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-          <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"></rect>
-          <circle cx="12" cy="12" r="4.6"></circle>
-          <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"></circle>
-        </svg>
-        @walkleyspecialistperformance
-      </a>
     </div>
   </section>
 </div>
@@ -926,7 +1058,17 @@
       <div class="brand">WSP<span>.</span></div>
       <p>Training for long snappers, kickers, and punters: the positions no one else builds for.</p>
     </div>
-    <span class="fine">© WSP · currently in private testing</span>
+    <div class="foot-right">
+      <a class="insta-link" href="https://www.instagram.com/walkleyspecialistperformance" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"></rect>
+          <circle cx="12" cy="12" r="4.6"></circle>
+          <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"></circle>
+        </svg>
+        @walkleyspecialistperformance
+      </a>
+      <span class="fine">© WSP · currently in private testing</span>
+    </div>
   </footer>
 </div>
 
@@ -964,7 +1106,7 @@
     window.scrollTo(0,0);
     if (name === 'program') enterProgram();
   }
-  document.getElementById('enterProgramBtn').addEventListener('click', function(){ showView('program'); });
+  document.querySelector('#view-start .hero').addEventListener('click', function(){ showView('program'); });
   document.getElementById('brandBtn').addEventListener('click', function(){ showView('start'); });
   document.getElementById('tabProgram').addEventListener('click', function(){ showView('program'); });
   document.getElementById('tabVideos').addEventListener('click', function(){ showView('videos'); });
