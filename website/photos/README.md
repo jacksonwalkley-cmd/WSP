@@ -2,17 +2,16 @@
 
 Images the site loads by path. Replace a file with the same name to swap the image.
 
-Start screen backgrounds (cross-fade in this order). They are finished mockups with
-"WSP. / TAP TO ENTER / @handle" drawn into the image, so keep that layout if you replace them:
+Home page
+- `home-hero.jpg`: hero on wide screens
+- `home-hero-mobile.jpg`: hero on phones (700px wide and under)
+- `card-snap.jpg`, `card-kick.jpg`, `card-punt.jpg`: "Pick your position" cards
 
-- `hero-forest.jpg`
-- `hero-mountain.jpg`
-- `hero-autumn.jpg`
+Page headers (Long Snapping theme)
+- `band-program.jpg`: Program and Join
+- `band-lab.jpg`: Snap Lab and Videos
+- `band-research.jpg`: Research and Profile
 
-Position picker posters (4:5 portrait):
-
-- `long-snapping.jpg`
-- `kicking.jpg`
-- `punting.jpg`
-
-If a poster file is missing, its card shows a placeholder icon instead of a broken image.
+Kicking and Punting themes swap the home hero and every page header to:
+- `theme-kick-tall.jpg`, `theme-kick-band.jpg`
+- `theme-punt-tall.jpg`, `theme-punt-band.jpg`
